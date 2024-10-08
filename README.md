@@ -1,27 +1,31 @@
-# Plataforma de Serviços e Comércios Locais
+Aqui está a descrição do seu projeto no GitHub com emojis para deixá-la mais atraente:
 
-## Descrição
+---
+
+# 🌟 Plataforma de Serviços e Comércios Locais 🌟
+
+## 📄 Descrição
 
 Esta aplicação web tem como objetivo conectar usuários a comércios e prestadores de serviços em uma determinada região. A plataforma permite que os usuários procurem por diversos tipos de serviços, como pintores, motoristas, seguranças, manicures, entre outros. Comerciantes e prestadores de serviços podem se cadastrar na plataforma mediante um pagamento, promovendo seus serviços e aumentando sua visibilidade.
 
-## Tecnologias Utilizadas
+## 🛠️ Tecnologias Utilizadas
 
 - **Frontend**: Vue.js
 - **Backend**: Spring Framework
 - **Banco de Dados**: MySQL
 
-## Funcionalidades
+## ✨ Funcionalidades
 
-- **Busca de Serviços e Comerciantes**: Usuários podem procurar por serviços e comércios locais.
-- **Cadastro de Serviços e Comerciantes**: Administradores podem cadastrar novos prestadores de serviços e comércios.
-- **Login Simples**: Sistema de autenticação para administradores.
-- **Promoção de Serviços**: Prestadores de serviços podem se cadastrar e promover seus serviços mediante um pagamento simbólico.
+- **🔍 Busca de Serviços e Comerciantes**: Usuários podem procurar por serviços e comércios locais.
+- **📝 Cadastro de Serviços e Comerciantes**: Administradores podem cadastrar novos prestadores de serviços e comércios.
+- **🔐 Login Simples**: Sistema de autenticação para administradores.
+- **📢 Promoção de Serviços**: Prestadores de serviços podem se cadastrar e promover seus serviços mediante um pagamento simbólico.
 
-## Futuras Atualizações
+## 🚀 Futuras Atualizações
 
-- **Autocadastro**: Permitir que prestadores de serviços e comerciantes se cadastrem e editem suas informações diretamente na plataforma após o pagamento.
+- **🆕 Autocadastro**: Permitir que prestadores de serviços e comerciantes se cadastrem e editem suas informações diretamente na plataforma após o pagamento.
 
-## Como Contribuir
+## 🤝 Como Contribuir
 
 1. Faça um fork do repositório.
 2. Crie uma branch para sua feature (`git checkout -b feature/nome-da-feature`).
