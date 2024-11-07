@@ -1,7 +1,3 @@
-Aqui está a descrição do seu projeto no GitHub com emojis para deixá-la mais atraente:
-
----
-
 # 🌟 Plataforma de Serviços e Comércios Locais 🌟
 
 ## 📄 Descrição
