@@ -16,7 +16,7 @@
       </div>
     </div>
     <div class="cards">
-      <div class="card">
+      <router-link to="/comercios" class="card">
         <img src="@/assets/comercio.png" alt="Comércio" />
         <h3>COMÉRCIOS</h3>
         <p>
@@ -24,8 +24,9 @@
           vestuário. Suporte o negócio da sua comunidade e descubra novidades
           pertinho de você.
         </p>
-      </div>
-      <div class="card">
+      </router-link>
+
+      <router-link to="/servicos" class="card">
         <img src="@/assets/servico.png" alt="Serviços" />
         <h3>SERVIÇOS</h3>
         <p>
@@ -33,8 +34,9 @@
           lista de serviços locais conecta você aos melhores profissionais da
           cidade, prontos para te atender.
         </p>
-      </div>
-      <div class="card">
+      </router-link>
+
+      <router-link to="/aluguels" class="card">
         <img src="@/assets/aluguel.png" alt="Aluguéis" />
         <h3>ALUGUÉIS</h3>
         <p>
@@ -42,8 +44,9 @@
           nossas opções de aluguéis na cidade, com detalhes e contato direto com
           os proprietários.
         </p>
-      </div>
+      </router-link>
     </div>
+
     <div class="logo-section">
       <img src="@/assets/logo.png" alt="Logo" />
     </div>
@@ -185,11 +188,13 @@ import Footer from "../components/Footer.vue";
   text-align: center;
   border-radius: 15px;
   transition: transform 0.3s, background-color 0.3s;
+  text-decoration: none; /* Remove a sublinhado */
+  color: inherit; /* Mantém a cor do texto */
 }
 
 .card:hover {
   transform: translateY(-10px);
-  background-color: #f0f0f0; /* Efeito hover para cor */
+  background-color: #f0f0f0;
 }
 
 .card img {
