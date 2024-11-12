@@ -1,15 +1,13 @@
 <template>
   <div>
-    <!-- Conteúdo futuro para a página de comércios -->
+    <Header :showSearch="true" />
+    <Footer />
   </div>
 </template>
 
-<script>
-export default {
-  name: "CommercePage",
-};
+<script setup>
+import Header from "../components/Header.vue";
+import Footer from "../components/Footer.vue";
 </script>
 
-<style scoped>
-/* Estilos futuros para a página de comércios */
-</style>
+<style scoped></style>

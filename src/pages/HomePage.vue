@@ -155,6 +155,7 @@ import Footer from "../components/Footer.vue";
 
 .banner-content p {
   margin: 1rem 0 0;
+  font-size: 1.2rem; /* Aumentar o tamanho da fonte */
 }
 
 .saiba-mais-button {
@@ -165,6 +166,8 @@ import Footer from "../components/Footer.vue";
   border-radius: 15px;
   text-decoration: none;
   margin-top: 1rem;
+  transform: scale(1.1); /* Cresce um pouco */
+  transition: background-color 0.3s, transform 0.3s;
 }
 
 .cards {
@@ -179,7 +182,6 @@ import Footer from "../components/Footer.vue";
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 1rem;
   width: 25%;
-  height: px;
   text-align: center;
   border-radius: 15px;
   transition: transform 0.3s, background-color 0.3s;
@@ -205,14 +207,22 @@ import Footer from "../components/Footer.vue";
 
 .sections {
   display: flex;
-  justify-content: space-around;
-  align-items: flex-start;
+  flex-direction: column; /* Alterado para coluna */
+  align-items: center; /* Centraliza as seções */
   padding: 2rem;
 }
 
 .section {
   display: flex;
-  width: 30%;
+  width: 80%; /* Ajustado para 80% da largura */
+  margin-bottom: 1rem; /* Espaço entre as seções */
+  padding: 2rem; /* Aumentar o padding */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Efeito profissional */
+  transition: transform 0.3s;
+}
+
+.section:hover {
+  transform: translateY(-10px); /* Crescer ao passar o mouse */
 }
 
 .section img {
@@ -229,7 +239,9 @@ import Footer from "../components/Footer.vue";
 
 .section p {
   margin-top: 0.5rem;
-  text-align: left; /* Alinhamento à esquerda */
+  text-align: left;
+  line-height: 1.5; /* Aumentar o espaço entre linhas */
+  max-height: 7rem; /* Aumentar a altura máxima dos parágrafos */
 }
 
 .form-section {
@@ -314,5 +326,80 @@ button {
 
 .contact-info p {
   margin-bottom: 0.5rem;
+}
+
+/* Estilos de responsividade */
+@media (max-width: 768px) {
+  .banner-content {
+    max-width: 100%;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .cards {
+    flex-direction: column;
+    align-items: center;
+    margin-top: 1rem;
+  }
+
+  .card {
+    width: 80%;
+    margin-bottom: 1rem;
+  }
+
+  .sections {
+    padding: 1rem;
+  }
+
+  .section {
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+  }
+
+  .form-section {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .form-content {
+    width: 80%;
+    margin-left: 0;
+    margin-bottom: 1rem;
+  }
+
+  .contact-info {
+    width: 80%;
+    padding: 1rem;
+  }
+
+  .footer {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .footer .logo {
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .banner-content h1,
+  .banner-content h2,
+  .banner-content p {
+    font-size: 1rem; /* Ajustar tamanho da fonte para dispositivos menores */
+  }
+
+  .form-content h2 {
+    font-size: 1.2rem;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  button {
+    font-size: 0.9rem;
+  }
 }
 </style>

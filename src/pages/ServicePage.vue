@@ -1,13 +1,13 @@
 <template>
   <div>
-    <!-- Conteúdo futuro para a página de serviços -->
+    <Header :showSearch="true" />
+    <Footer />
   </div>
 </template>
 
-<script>
-export default {
-  name: "ServicePage",
-};
+<script setup>
+import Header from "../components/Header.vue";
+import Footer from "../components/Footer.vue";
 </script>
 
 <style scoped>
