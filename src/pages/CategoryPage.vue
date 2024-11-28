@@ -1,27 +1,17 @@
 <template>
   <div>
     <Header :showSearch="true" />
-    <div class="categories">
-      <div v-for="category in categories" :key="category.id" class="category">
-        <div class="category-header">
-          <h3>{{ category.name }}</h3>
-          <img
-            src="@/assets/seta-direita.png"
-            alt="Icon"
-            @click="viewAllItems(category.id)"
-            class="toggle-icon"
-          />
-        </div>
-        <div class="items">
-          <div
-            v-for="item in category.items.slice(0, 3)"
-            :key="item.id"
-            class="item"
-            @click="viewItemDetail(item.id)"
-          >
-            <img :src="item.photo" alt="Photo" class="item-photo" />
-            <p>{{ item.name }}</p>
-          </div>
+    <div class="category-items">
+      <h2>{{ categoryName }}</h2>
+      <div class="items">
+        <div
+          v-for="item in items"
+          :key="item.id"
+          class="item"
+          @click="viewItemDetail(item.id)"
+        >
+          <img :src="item.photo" alt="Photo" class="item-photo" />
+          <p>{{ item.name }}</p>
         </div>
       </div>
     </div>
@@ -30,33 +20,28 @@
 </template>
 
 <script>
+import { onMounted, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
-import { useRouter } from "vue-router";
 
 export default {
-  name: "HomePage",
+  name: "CategoryPage",
   components: {
     Header,
     Footer,
   },
   setup() {
+    const route = useRoute();
     const router = useRouter();
-    const viewAllItems = (categoryId) => {
-      router.push({ name: "CategoryPage", params: { categoryId: categoryId } });
-    };
+    const categoryId = route.params.categoryId;
+    const categoryName = ref("");
+    const items = ref([]);
 
-    const viewItemDetail = (itemId) => {
-      router.push({ name: "ItemDetailPage", params: { itemId: itemId } });
-    };
-
-    return { viewAllItems, viewItemDetail };
-  },
-  data() {
-    return {
-      categories: [
-        {
-          id: 1,
+    const fetchCategoryItems = () => {
+      // Substitua este código com a busca real no Firestore mais tarde
+      const mockCategories = {
+        1: {
           name: "Restaurantes",
           items: [
             { id: 1, name: "Restaurante A", photo: "path/to/photo1.jpg" },
@@ -65,8 +50,7 @@ export default {
             { id: 4, name: "Restaurante D", photo: "path/to/photo4.jpg" },
           ],
         },
-        {
-          id: 2,
+        2: {
           name: "Supermercados",
           items: [
             { id: 1, name: "Supermercado A", photo: "path/to/photo1.jpg" },
@@ -75,8 +59,7 @@ export default {
             { id: 4, name: "Supermercado D", photo: "path/to/photo4.jpg" },
           ],
         },
-        {
-          id: 3,
+        3: {
           name: "Lojas de Roupas",
           items: [
             { id: 1, name: "Loja A", photo: "path/to/photo1.jpg" },
@@ -85,8 +68,7 @@ export default {
             { id: 4, name: "Loja D", photo: "path/to/photo4.jpg" },
           ],
         },
-        {
-          id: 4,
+        4: {
           name: "Academias",
           items: [
             { id: 1, name: "Academia A", photo: "path/to/photo1.jpg" },
@@ -95,8 +77,7 @@ export default {
             { id: 4, name: "Academia D", photo: "path/to/photo4.jpg" },
           ],
         },
-        {
-          id: 5,
+        5: {
           name: "Livrarias",
           items: [
             { id: 1, name: "Livraria A", photo: "path/to/photo1.jpg" },
@@ -105,8 +86,7 @@ export default {
             { id: 4, name: "Livraria D", photo: "path/to/photo4.jpg" },
           ],
         },
-        {
-          id: 6,
+        6: {
           name: "Farmácias",
           items: [
             { id: 1, name: "Farmácia A", photo: "path/to/photo1.jpg" },
@@ -115,8 +95,7 @@ export default {
             { id: 4, name: "Farmácia D", photo: "path/to/photo4.jpg" },
           ],
         },
-        {
-          id: 7,
+        7: {
           name: "Padarias",
           items: [
             { id: 1, name: "Padaria A", photo: "path/to/photo1.jpg" },
@@ -125,8 +104,7 @@ export default {
             { id: 4, name: "Padaria D", photo: "path/to/photo4.jpg" },
           ],
         },
-        {
-          id: 8,
+        8: {
           name: "Pet Shops",
           items: [
             { id: 1, name: "Pet Shop A", photo: "path/to/photo1.jpg" },
@@ -135,8 +113,7 @@ export default {
             { id: 4, name: "Pet Shop D", photo: "path/to/photo4.jpg" },
           ],
         },
-        {
-          id: 9,
+        9: {
           name: "Bares",
           items: [
             { id: 1, name: "Bar A", photo: "path/to/photo1.jpg" },
@@ -145,8 +122,7 @@ export default {
             { id: 4, name: "Bar D", photo: "path/to/photo4.jpg" },
           ],
         },
-        {
-          id: 10,
+        10: {
           name: "Salões de Beleza",
           items: [
             { id: 1, name: "Salão A", photo: "path/to/photo1.jpg" },
@@ -155,33 +131,33 @@ export default {
             { id: 4, name: "Salão D", photo: "path/to/photo4.jpg" },
           ],
         },
-      ],
+      };
+
+      const category = mockCategories[categoryId];
+      if (category) {
+        categoryName.value = category.name;
+        items.value = category.items;
+      }
+    };
+
+    const viewItemDetail = (itemId) => {
+      router.push({ name: "ItemDetailPage", params: { itemId: itemId } });
+    };
+
+    onMounted(fetchCategoryItems);
+
+    return {
+      categoryName,
+      items,
+      viewItemDetail,
     };
   },
 };
 </script>
 
 <style scoped>
-.categories {
-  display: flex;
-  flex-direction: column;
+.category-items {
   margin: 2rem;
-}
-
-.category {
-  margin-bottom: 2rem;
-}
-
-.category-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.toggle-icon {
-  cursor: pointer;
-  width: 24px;
-  height: 24px;
 }
 
 .items {
@@ -193,7 +169,7 @@ export default {
   width: 150px;
   margin: 1rem;
   text-align: center;
-  cursor: pointer; /* Adiciona cursor pointer */
+  cursor: pointer;
 }
 
 .item-photo {

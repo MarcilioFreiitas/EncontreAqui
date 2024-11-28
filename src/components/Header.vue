@@ -15,9 +15,7 @@
         <li><router-link to="/aluguels">Aluguéis</router-link></li>
         <li><router-link to="/sobre">Sobre</router-link></li>
       </ul>
-      <router-link to="/cadastro" class="cadastro-button"
-        >Cadastre-se</router-link
-      >
+      <router-link to="/login" class="cadastro-button">Login</router-link>
     </nav>
   </header>
 </template>
@@ -130,7 +128,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #ebe9e9; /* Tom de cinza intermediário */
+  background-color: #fcf8f8; /* Tom de cinza intermediário */
   padding: 0.5rem;
   border-radius: 15px;
   width: 50%; /* Largura adequada */
