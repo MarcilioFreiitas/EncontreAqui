@@ -2,13 +2,13 @@
   <div>
     <Header :showSearch="true" />
     <div class="categories">
-      <div v-for="category in categories" :key="category.id" class="category">
+      <div v-for="category in categories" :key="category.nome" class="category">
         <div class="category-header">
-          <h3>{{ category.name }}</h3>
+          <h3>{{ category.nome }}</h3>
           <img
             src="@/assets/seta-direita.png"
             alt="Icon"
-            @click="viewAllItems(category.id, 'service')"
+            @click="viewAllItems(category.nome, 'service')"
             class="toggle-icon"
           />
         </div>
@@ -19,8 +19,8 @@
             class="item"
             @click="viewItemDetail(item.id, 'service')"
           >
-            <img :src="item.photo" alt="Photo" class="item-photo" />
-            <p>{{ item.name }}</p>
+            <img :src="item.imagem" alt="Photo" class="item-photo" />
+            <p>{{ item.nome }}</p>
           </div>
         </div>
       </div>
@@ -33,6 +33,8 @@
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
 import { useRouter } from "vue-router";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebaseConfig";
 
 export default {
   name: "ServicePage",
@@ -42,10 +44,10 @@ export default {
   },
   setup() {
     const router = useRouter();
-    const viewAllItems = (categoryId, type) => {
+    const viewAllItems = (categoryName, type) => {
       router.push({
         name: "CategoryPage",
-        params: { categoryId: categoryId, type: type },
+        params: { categoryId: categoryName, categoryType: type },
       });
     };
 
@@ -60,59 +62,29 @@ export default {
   },
   data() {
     return {
-      categories: [
-        {
-          id: 1,
-          name: "Encanadores",
-          items: [
-            { id: 1, name: "Encanador A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Encanador B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Encanador C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Encanador D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        {
-          id: 2,
-          name: "Eletricistas",
-          items: [
-            { id: 1, name: "Eletricista A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Eletricista B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Eletricista C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Eletricista D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        {
-          id: 3,
-          name: "Marceneiros",
-          items: [
-            { id: 1, name: "Marceneiro A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Marceneiro B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Marceneiro C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Marceneiro D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        {
-          id: 4,
-          name: "Pedreiros",
-          items: [
-            { id: 1, name: "Pedreiro A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Pedreiro B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Pedreiro C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Pedreiro D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        {
-          id: 5,
-          name: "Pintores",
-          items: [
-            { id: 1, name: "Pintor A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Pintor B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Pintor C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Pintor D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-      ],
+      categories: [],
     };
+  },
+  async created() {
+    const querySnapshot = await getDocs(collection(db, "servicos"));
+    const servicos = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    const categoriesMap = servicos.reduce((acc, servico) => {
+      const category = servico.categoria;
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(servico);
+      return acc;
+    }, {});
+
+    this.categories = Object.keys(categoriesMap).map((key) => ({
+      nome: key,
+      items: categoriesMap[key],
+    }));
   },
 };
 </script>

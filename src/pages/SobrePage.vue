@@ -3,7 +3,6 @@
     <Header :showSearch="false" />
     <div class="about-content">
       <section class="intro">
-        <img src="@/assets/logo.png" alt="Company Logo" class="company-logo" />
         <p>
           Nossa empresa foi fundada com a missão de facilitar a vida das
           pessoas, entregando valor e soluções inovadoras. Acreditamos que a

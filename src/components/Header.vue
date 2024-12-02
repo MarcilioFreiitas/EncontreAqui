@@ -3,7 +3,6 @@
     <router-link to="/" class="logo-link">
       <img src="@/assets/logo.png" alt="Logo" class="logo" />
     </router-link>
-    <!-- Barra de pesquisa condicional -->
     <div v-if="showSearch" class="search-bar">
       <input type="text" placeholder="Pesquisar..." />
       <img src="@/assets/lupa.png" alt="Pesquisar" class="search-icon" />
@@ -15,12 +14,27 @@
         <li><router-link to="/aluguels">Aluguéis</router-link></li>
         <li><router-link to="/sobre">Sobre</router-link></li>
       </ul>
-      <router-link to="/login" class="cadastro-button">Login</router-link>
+      <div v-if="isAuthenticated" class="user-section" @click="toggleDropdown">
+        <img
+          src="@/assets/do-utilizador.png"
+          alt="User Icon"
+          class="user-icon"
+        />
+        <div v-if="dropdownVisible" class="dropdown-menu">
+          <button @click="logout" class="dropdown-item">Sair</button>
+        </div>
+      </div>
+      <router-link v-else to="/login" class="cadastro-button"
+        >Login</router-link
+      >
     </nav>
   </header>
 </template>
 
 <script>
+import { ref, onMounted } from "vue";
+import { onAuthStateChanged, getAuth, signOut } from "firebase/auth";
+
 export default {
   name: "Header",
   props: {
@@ -29,21 +43,45 @@ export default {
       default: false,
     },
   },
-  data() {
-    return {
-      isSticky: false,
+  setup() {
+    const isSticky = ref(false);
+    const isAuthenticated = ref(false);
+    const dropdownVisible = ref(false);
+    const auth = getAuth();
+
+    onMounted(() => {
+      window.addEventListener("scroll", handleScroll);
+      onAuthStateChanged(auth, (user) => {
+        isAuthenticated.value = !!user;
+      });
+    });
+
+    const handleScroll = () => {
+      isSticky.value = window.scrollY > 50;
     };
-  },
-  mounted() {
-    window.addEventListener("scroll", this.handleScroll);
-  },
-  beforeDestroy() {
-    window.removeEventListener("scroll", this.handleScroll);
-  },
-  methods: {
-    handleScroll() {
-      this.isSticky = window.scrollY > 50;
-    },
+
+    const toggleDropdown = () => {
+      dropdownVisible.value = !dropdownVisible.value;
+    };
+
+    const logout = async () => {
+      try {
+        await signOut(auth);
+        isAuthenticated.value = false;
+        dropdownVisible.value = false;
+      } catch (error) {
+        console.error("Erro ao fazer logout: ", error);
+      }
+    };
+
+    return {
+      isSticky,
+      isAuthenticated,
+      dropdownVisible,
+      handleScroll,
+      toggleDropdown,
+      logout,
+    };
   },
 };
 </script>
@@ -55,28 +93,27 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
+  padding: 0.5rem 1rem; /* Reduzir padding */
   background-color: #fff;
   font-family: "Inter", sans-serif;
   transition: all 0.3s ease;
-  box-shadow: none; /* Remover sombra ao desfixar */
-  height: 40px; /* Fixar a altura do header */
+  box-shadow: none;
 }
 
 .sticky {
   position: fixed;
   top: 0;
   width: 100%;
-  background-color: rgba(255, 255, 255, 0.8); /* Transparência */
-  backdrop-filter: blur(10px); /* Efeito de vidro */
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
   z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Sombra suave ao fixar */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .logo {
-  height: 90px; /* Aumentar altura do logo */
-  width: 90px; /* Aumentar largura do logo */
-  margin: 0; /* Remover margens adicionais */
+  height: 60px; /* Reduzir altura do logo */
+  width: 60px; /* Reduzir largura do logo */
+  margin: 0;
 }
 
 .logo-link {
@@ -87,12 +124,12 @@ export default {
 .nav {
   display: flex;
   align-items: center;
-  gap: 1.5rem; /* Reduzir gap */
+  gap: 1rem;
 }
 
 .nav-links {
   display: flex;
-  gap: 2rem; /* Aumentar espaço entre links */
+  gap: 1rem;
   list-style-type: none;
   margin: 0;
 }
@@ -104,77 +141,138 @@ export default {
 }
 
 .nav-links li a:hover {
-  color: #445669; /* Cor para o efeito hover */
-  transform: scale(1.1); /* Cresce um pouco */
+  color: #445669;
+  transform: scale(1.1);
 }
 
 .cadastro-button {
   background-color: #000;
   color: #fff;
-  padding: 0.5rem 1rem;
-  border-radius: 15px;
+  padding: 0.5rem 0.5rem; /* Reduzir padding */
+  border-radius: 10px; /* Reduzir borda */
   text-decoration: none;
   font-family: "Inter", sans-serif;
   transition: background-color 0.3s, transform 0.3s;
 }
 
 .cadastro-button:hover {
-  background-color: #425161; /* Cor para o efeito hover */
-  transform: scale(1.1); /* Cresce um pouco */
+  background-color: #425161;
+  transform: scale(1.1);
 }
 
-/* Estilos para a barra de pesquisa */
+.user-section {
+  display: flex;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+}
+
+.user-icon {
+  width: 25px; /* Reduzir tamanho do ícone */
+  height: 25px; /* Reduzir tamanho do ícone */
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  overflow: hidden;
+  z-index: 1001;
+}
+
+.dropdown-item {
+  padding: 0.5rem 1rem;
+  background-color: #fff;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: background-color 0.3s;
+}
+
+.dropdown-item:hover {
+  background-color: #f0f0f0;
+}
+
 .search-bar {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #fcf8f8; /* Tom de cinza intermediário */
-  padding: 0.5rem;
+  background-color: #fcf8f8;
+  padding: 0.25rem; /* Reduzir padding */
   border-radius: 15px;
-  width: 50%; /* Largura adequada */
-  height: 20px;
+  width: 50%;
 }
 
 .search-bar input {
   border: none;
   background: none;
   outline: none;
-  padding: 0.5rem;
-  font-size: 1rem;
+  padding: 0.25rem;
+  font-size: 0.9rem; /* Reduzir tamanho da fonte */
   flex-grow: 1;
 }
 
 .search-icon {
   height: 20px;
   width: 20px;
-  margin-left: 0.5rem;
+  margin-left: 0.25rem;
 }
 
-/* Estilos de responsividade */
 @media (max-width: 768px) {
   .header {
-    flex-direction: column;
+    flex-direction: row;
     height: auto;
+    padding: 0.5rem; /* Ajustar padding */
   }
 
   .logo {
-    height: 70px; /* Ajustar altura do logo */
-    width: 70px; /* Ajustar largura do logo */
+    height: 50px; /* Reduzir ainda mais para dispositivos móveis */
+    width: 50px;
   }
 
   .nav {
     justify-content: center;
-    margin-top: 1rem;
-  }
-
-  .search-bar {
-    width: 80%;
-    margin: 1rem 0;
   }
 
   .cadastro-button {
-    padding: 0.5rem 2rem;
-    margin-top: 1rem;
+    padding: 0.25rem 1rem;
+    margin-left: auto; /* Adicionar margem automática para o lado direito */
+  }
+
+  .sticky {
+    position: static;
+    background-color: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .nav-links {
+    display: none;
+  }
+
+  .drawer {
+    display: block;
+  }
+
+  .drawer .v-list-item {
+    display: flex;
+    justify-content: center;
+  }
+
+  .drawer .v-list-item a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 1rem;
+    text-decoration: none;
+    color: inherit;
+    font-size: 1.1rem;
+    font-family: "Inter", sans-serif;
   }
 }
 

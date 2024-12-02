@@ -2,13 +2,13 @@
   <div>
     <Header :showSearch="true" />
     <div class="categories">
-      <div v-for="category in categories" :key="category.id" class="category">
+      <div v-for="category in categories" :key="category.nome" class="category">
         <div class="category-header">
-          <h3>{{ category.name }}</h3>
+          <h3>{{ category.nome }}</h3>
           <img
             src="@/assets/seta-direita.png"
             alt="Icon"
-            @click="viewAllItems(category.id)"
+            @click="viewAllItems(category.nome, 'commerce')"
             class="toggle-icon"
           />
         </div>
@@ -17,10 +17,10 @@
             v-for="item in category.items.slice(0, 3)"
             :key="item.id"
             class="item"
-            @click="viewItemDetail(item.id)"
+            @click="viewItemDetail(item.id, 'commerce')"
           >
-            <img :src="item.photo" alt="Photo" class="item-photo" />
-            <p>{{ item.name }}</p>
+            <img :src="item.imagem" alt="Photo" class="item-photo" />
+            <p>{{ item.nome }}</p>
           </div>
         </div>
       </div>
@@ -33,6 +33,8 @@
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
 import { useRouter } from "vue-router";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebaseConfig";
 
 export default {
   name: "HomePage",
@@ -42,121 +44,47 @@ export default {
   },
   setup() {
     const router = useRouter();
-    const viewAllItems = (categoryId) => {
-      router.push({ name: "CategoryPage", params: { categoryId: categoryId } });
+    const viewAllItems = (categoryName, categoryType) => {
+      router.push({
+        name: "CategoryPage",
+        params: { categoryId: categoryName, categoryType: categoryType },
+      });
     };
 
-    const viewItemDetail = (itemId) => {
-      router.push({ name: "ItemDetailPage", params: { itemId: itemId } });
+    const viewItemDetail = (itemId, type) => {
+      router.push({
+        name: "ItemDetailPage",
+        params: { itemId: itemId, type: type },
+      });
     };
 
     return { viewAllItems, viewItemDetail };
   },
   data() {
     return {
-      categories: [
-        {
-          id: 1,
-          name: "Restaurantes",
-          items: [
-            { id: 1, name: "Restaurante A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Restaurante B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Restaurante C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Restaurante D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        {
-          id: 2,
-          name: "Supermercados",
-          items: [
-            { id: 1, name: "Supermercado A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Supermercado B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Supermercado C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Supermercado D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        {
-          id: 3,
-          name: "Lojas de Roupas",
-          items: [
-            { id: 1, name: "Loja A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Loja B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Loja C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Loja D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        {
-          id: 4,
-          name: "Academias",
-          items: [
-            { id: 1, name: "Academia A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Academia B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Academia C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Academia D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        {
-          id: 5,
-          name: "Livrarias",
-          items: [
-            { id: 1, name: "Livraria A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Livraria B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Livraria C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Livraria D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        {
-          id: 6,
-          name: "Farmácias",
-          items: [
-            { id: 1, name: "Farmácia A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Farmácia B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Farmácia C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Farmácia D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        {
-          id: 7,
-          name: "Padarias",
-          items: [
-            { id: 1, name: "Padaria A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Padaria B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Padaria C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Padaria D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        {
-          id: 8,
-          name: "Pet Shops",
-          items: [
-            { id: 1, name: "Pet Shop A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Pet Shop B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Pet Shop C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Pet Shop D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        {
-          id: 9,
-          name: "Bares",
-          items: [
-            { id: 1, name: "Bar A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Bar B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Bar C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Bar D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        {
-          id: 10,
-          name: "Salões de Beleza",
-          items: [
-            { id: 1, name: "Salão A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Salão B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Salão C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Salão D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-      ],
+      categories: [],
     };
+  },
+  async created() {
+    const querySnapshot = await getDocs(collection(db, "comercios"));
+    const comercios = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    const categoriesMap = comercios.reduce((acc, comercio) => {
+      const category = comercio.categoria;
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(comercio);
+      return acc;
+    }, {});
+
+    this.categories = Object.keys(categoriesMap).map((key) => ({
+      nome: key,
+      items: categoriesMap[key],
+    }));
   },
 };
 </script>
@@ -193,7 +121,7 @@ export default {
   width: 150px;
   margin: 1rem;
   text-align: center;
-  cursor: pointer; /* Adiciona cursor pointer */
+  cursor: pointer;
 }
 
 .item-photo {

@@ -19,10 +19,14 @@ const routes = [
     name: "CategoryPage",
     component: CategoryPage,
   },
-  { path: "/item/:itemId", name: "ItemDetailPage", component: ItemDetailPage },
+  {
+    path: "/item/:itemId/:type",
+    name: "ItemDetailPage",
+    component: ItemDetailPage,
+  },
   { path: "/login", component: LoginPage },
   { path: "/register", component: RegisterPage },
-  { path: "/sobre", component: SobrePage }, // Adicionada a rota para a página "Sobre"
+  { path: "/sobre", component: SobrePage },
 ];
 
 const router = createRouter({

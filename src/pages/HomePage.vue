@@ -92,18 +92,18 @@
       <div class="form-overlay">
         <div class="form-content">
           <h2>Entre em contato conosco</h2>
-          <form>
+          <form @submit.prevent="submitForm">
             <div class="form-group">
               <label for="name">Nome</label>
-              <input type="text" id="name" name="name" />
+              <input type="text" id="name" v-model="nome" />
             </div>
             <div class="form-group">
               <label for="email">Email</label>
-              <input type="email" id="email" name="email" />
+              <input type="email" id="email" v-model="email" />
             </div>
             <div class="form-group">
               <label for="message">Mensagem</label>
-              <textarea id="message" name="message"></textarea>
+              <textarea id="message" v-model="mensagem"></textarea>
             </div>
             <button type="submit">Enviar</button>
           </form>
@@ -116,14 +116,61 @@
         </div>
       </div>
     </div>
+
     <router-view />
     <Footer />
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted } from "vue";
+import { collection, addDoc } from "firebase/firestore";
+import { signOut, onAuthStateChanged, getAuth } from "firebase/auth";
+import { db } from "../firebaseConfig";
+
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
+
+const auth = getAuth();
+const isAuthenticated = ref(false);
+
+const nome = ref("");
+const email = ref("");
+const mensagem = ref("");
+
+const submitForm = async () => {
+  try {
+    await addDoc(collection(db, "contatos"), {
+      nome: nome.value,
+      email: email.value,
+      mensagem: mensagem.value,
+    });
+    alert("Mensagem enviada com sucesso!");
+    nome.value = "";
+    email.value = "";
+    mensagem.value = "";
+  } catch (e) {
+    console.error("Erro ao enviar mensagem: ", e);
+    alert(
+      "Ocorreu um erro ao enviar sua mensagem. Por favor, tente novamente."
+    );
+  }
+};
+
+const logout = async () => {
+  try {
+    await signOut(auth);
+    isAuthenticated.value = false;
+  } catch (error) {
+    console.error("Erro ao fazer logout: ", error);
+  }
+};
+
+onMounted(() => {
+  onAuthStateChanged(auth, (user) => {
+    isAuthenticated.value = !!user;
+  });
+});
 </script>
 
 <style scoped>
@@ -173,6 +220,30 @@ import Footer from "../components/Footer.vue";
   transition: background-color 0.3s, transform 0.3s;
 }
 
+.auth-buttons {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem;
+}
+
+.auth-button {
+  background-color: #000;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-left: 1rem;
+}
+
+.auth-button:hover {
+  background-color: #333;
+}
+
+.user-icon {
+  width: 20px;
+  height: 20px;
+}
 .cards {
   display: flex;
   justify-content: space-around;

@@ -2,13 +2,13 @@
   <div>
     <Header :showSearch="true" />
     <div class="categories">
-      <div v-for="category in categories" :key="category.id" class="category">
+      <div v-for="category in categories" :key="category.nome" class="category">
         <div class="category-header">
-          <h3>{{ category.name }}</h3>
+          <h3>{{ category.nome }}</h3>
           <img
             src="@/assets/seta-direita.png"
             alt="Icon"
-            @click="viewAllItems(category.id)"
+            @click="viewAllItems(category.nome, 'rental')"
             class="toggle-icon"
           />
         </div>
@@ -17,10 +17,10 @@
             v-for="item in category.items.slice(0, 3)"
             :key="item.id"
             class="item"
-            @click="viewItemDetail(item.id)"
+            @click="viewItemDetail(item.id, 'rental')"
           >
-            <img :src="item.photo" alt="Photo" class="item-photo" />
-            <p>{{ item.name }}</p>
+            <img :src="item.imagem" alt="Photo" class="item-photo" />
+            <p>{{ item.nome }}</p>
           </div>
         </div>
       </div>
@@ -33,6 +33,8 @@
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
 import { useRouter } from "vue-router";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebaseConfig";
 
 export default {
   name: "RentalPage",
@@ -42,71 +44,47 @@ export default {
   },
   setup() {
     const router = useRouter();
-    const viewAllItems = (categoryId) => {
-      router.push({ name: "CategoryPage", params: { categoryId: categoryId } });
+    const viewAllItems = (categoryName, type) => {
+      router.push({
+        name: "CategoryPage",
+        params: { categoryId: categoryName, categoryType: type },
+      });
     };
 
-    const viewItemDetail = (itemId) => {
-      router.push({ name: "ItemDetailPage", params: { itemId: itemId } });
+    const viewItemDetail = (itemId, type) => {
+      router.push({
+        name: "ItemDetailPage",
+        params: { itemId: itemId, type: type },
+      });
     };
 
     return { viewAllItems, viewItemDetail };
   },
   data() {
     return {
-      categories: [
-        {
-          id: 1,
-          name: "Casas",
-          items: [
-            { id: 1, name: "Casa A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Casa B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Casa C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Casa D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        {
-          id: 2,
-          name: "Apartamentos",
-          items: [
-            { id: 1, name: "Apartamento A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Apartamento B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Apartamento C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Apartamento D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        {
-          id: 3,
-          name: "Comércios",
-          items: [
-            { id: 1, name: "Comércio A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Comércio B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Comércio C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Comércio D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        {
-          id: 4,
-          name: "Salas Comerciais",
-          items: [
-            { id: 1, name: "Sala Comercial A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Sala Comercial B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Sala Comercial C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Sala Comercial D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        {
-          id: 5,
-          name: "Terrenos",
-          items: [
-            { id: 1, name: "Terreno A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Terreno B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Terreno C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Terreno D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-      ],
+      categories: [],
     };
+  },
+  async created() {
+    const querySnapshot = await getDocs(collection(db, "alugueis"));
+    const alugueis = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    const categoriesMap = alugueis.reduce((acc, aluguel) => {
+      const category = aluguel.categoria;
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(aluguel);
+      return acc;
+    }, {});
+
+    this.categories = Object.keys(categoriesMap).map((key) => ({
+      nome: key,
+      items: categoriesMap[key],
+    }));
   },
 };
 </script>

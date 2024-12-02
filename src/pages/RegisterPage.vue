@@ -41,6 +41,16 @@
 <script>
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signOut,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { ref } from "vue";
+import { useRouter } from "vue-router";
 
 export default {
   name: "RegisterPage",
@@ -48,33 +58,86 @@ export default {
     Header,
     Footer,
   },
-  data() {
-    return {
-      firstName: "",
-      lastName: "",
-      email: "",
-      password: "",
-    };
-  },
-  methods: {
-    async register() {
+  setup() {
+    const firstName = ref("");
+    const lastName = ref("");
+    const email = ref("");
+    const password = ref("");
+    const router = useRouter();
+    const auth = getAuth();
+    const db = getFirestore();
+
+    const register = async () => {
       try {
-        await createUserWithEmailAndPassword(auth, this.email, this.password);
-        // Aqui você pode adicionar lógica para salvar o firstName e lastName no Firestore, se desejar.
-        this.$router.push("/");
+        const result = await createUserWithEmailAndPassword(
+          auth,
+          email.value,
+          password.value
+        );
+        const user = result.user;
+
+        // Salvar informações do usuário no Firestore
+        await setDoc(
+          doc(db, "usuarios", user.uid),
+          {
+            userId: user.uid,
+            nome: `${firstName.value} ${lastName.value}`,
+            email: email.value,
+          },
+          { merge: true }
+        );
+
+        alert("Cadastro realizado com sucesso!");
+
+        // Desautenticar o usuário
+        await signOut(auth);
+
+        // Redirecionar para a página de login
+        router.push("/login");
       } catch (error) {
         console.error("Erro ao fazer cadastro:", error.message);
+        alert("Erro ao fazer cadastro. Por favor, tente novamente.");
       }
-    },
-    async registerWithGoogle() {
+    };
+
+    const registerWithGoogle = async () => {
       try {
         const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
-        this.$router.push("/");
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        // Salvar informações do usuário no Firestore
+        await setDoc(
+          doc(db, "usuarios", user.uid),
+          {
+            userId: user.uid,
+            nome: user.displayName,
+            email: user.email,
+          },
+          { merge: true }
+        );
+
+        alert("Cadastro realizado com Google com sucesso!");
+
+        // Desautenticar o usuário
+        await signOut(auth);
+
+        // Redirecionar para a página de login
+        router.push("/login");
       } catch (error) {
         console.error("Erro ao fazer cadastro com Google:", error.message);
+        alert("Erro ao fazer cadastro com Google. Por favor, tente novamente.");
       }
-    },
+    };
+
+    return {
+      firstName,
+      lastName,
+      email,
+      password,
+      register,
+      registerWithGoogle,
+    };
   },
 };
 </script>
@@ -177,7 +240,7 @@ button {
   align-items: center;
   justify-content: center;
   background-color: #ffffff;
-  color: #363636; /* Define a cor do texto para preto */
+  color: #000; /* Define a cor do texto para preto */
   border: 1px solid #ffffff;
 }
 

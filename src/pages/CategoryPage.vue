@@ -1,17 +1,19 @@
 <template>
-  <div>
+  <div class="container">
     <Header :showSearch="true" />
-    <div class="category-items">
-      <h2>{{ categoryName }}</h2>
-      <div class="items">
-        <div
-          v-for="item in items"
-          :key="item.id"
-          class="item"
-          @click="viewItemDetail(item.id)"
-        >
-          <img :src="item.photo" alt="Photo" class="item-photo" />
-          <p>{{ item.name }}</p>
+    <div class="content">
+      <div class="category-items">
+        <h2>{{ categoryName }}</h2>
+        <div class="items">
+          <div
+            v-for="item in items"
+            :key="item.id"
+            class="item"
+            @click="viewItemDetail(item.id)"
+          >
+            <img :src="item.imagem" alt="Photo" class="item-photo" />
+            <p>{{ item.nome }}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -24,6 +26,8 @@ import { onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../firebaseConfig";
 
 export default {
   name: "CategoryPage",
@@ -34,114 +38,33 @@ export default {
   setup() {
     const route = useRoute();
     const router = useRouter();
-    const categoryId = route.params.categoryId;
-    const categoryName = ref("");
+    const categoryName = ref(route.params.categoryId || "");
+    const categoryType = ref(route.params.categoryType || "");
     const items = ref([]);
 
-    const fetchCategoryItems = () => {
-      // Substitua este código com a busca real no Firestore mais tarde
-      const mockCategories = {
-        1: {
-          name: "Restaurantes",
-          items: [
-            { id: 1, name: "Restaurante A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Restaurante B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Restaurante C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Restaurante D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        2: {
-          name: "Supermercados",
-          items: [
-            { id: 1, name: "Supermercado A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Supermercado B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Supermercado C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Supermercado D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        3: {
-          name: "Lojas de Roupas",
-          items: [
-            { id: 1, name: "Loja A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Loja B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Loja C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Loja D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        4: {
-          name: "Academias",
-          items: [
-            { id: 1, name: "Academia A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Academia B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Academia C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Academia D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        5: {
-          name: "Livrarias",
-          items: [
-            { id: 1, name: "Livraria A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Livraria B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Livraria C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Livraria D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        6: {
-          name: "Farmácias",
-          items: [
-            { id: 1, name: "Farmácia A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Farmácia B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Farmácia C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Farmácia D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        7: {
-          name: "Padarias",
-          items: [
-            { id: 1, name: "Padaria A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Padaria B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Padaria C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Padaria D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        8: {
-          name: "Pet Shops",
-          items: [
-            { id: 1, name: "Pet Shop A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Pet Shop B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Pet Shop C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Pet Shop D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        9: {
-          name: "Bares",
-          items: [
-            { id: 1, name: "Bar A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Bar B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Bar C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Bar D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-        10: {
-          name: "Salões de Beleza",
-          items: [
-            { id: 1, name: "Salão A", photo: "path/to/photo1.jpg" },
-            { id: 2, name: "Salão B", photo: "path/to/photo2.jpg" },
-            { id: 3, name: "Salão C", photo: "path/to/photo3.jpg" },
-            { id: 4, name: "Salão D", photo: "path/to/photo4.jpg" },
-          ],
-        },
-      };
-
-      const category = mockCategories[categoryId];
-      if (category) {
-        categoryName.value = category.name;
-        items.value = category.items;
-      }
+    const fetchCategoryItems = async () => {
+      const collectionName =
+        categoryType.value === "commerce"
+          ? "comercios"
+          : categoryType.value === "service"
+          ? "servicos"
+          : "alugueis";
+      const q = query(
+        collection(db, collectionName),
+        where("categoria", "==", categoryName.value)
+      );
+      const querySnapshot = await getDocs(q);
+      items.value = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
     };
 
     const viewItemDetail = (itemId) => {
-      router.push({ name: "ItemDetailPage", params: { itemId: itemId } });
+      router.push({
+        name: "ItemDetailPage",
+        params: { itemId: itemId, type: categoryType.value },
+      });
     };
 
     onMounted(fetchCategoryItems);
@@ -156,8 +79,20 @@ export default {
 </script>
 
 <style scoped>
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.content {
+  flex: 1;
+  padding: 2rem;
+  text-align: center;
+}
+
 .category-items {
-  margin: 2rem;
+  margin: 2rem 0;
 }
 
 .items {

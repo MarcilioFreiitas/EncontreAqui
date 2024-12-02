@@ -14,6 +14,7 @@
         </div>
         <button type="submit" class="btn-primary">Login</button>
         <button type="button" class="btn-secondary" @click="loginWithGoogle">
+          Entrar com
           <img
             src="@/assets/google.png"
             alt="Google Icon"
@@ -21,6 +22,7 @@
           />
         </button>
       </form>
+      <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
       <router-link to="/register" class="register-link"
         >Não tem uma conta? Cadastre-se</router-link
       >
@@ -32,6 +34,13 @@
 <script>
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
+import {
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
+import { auth, db } from "../firebaseConfig";
+import { doc, setDoc } from "firebase/firestore";
 
 export default {
   name: "LoginPage",
@@ -43,6 +52,7 @@ export default {
     return {
       email: "",
       password: "",
+      errorMessage: "",
     };
   },
   methods: {
@@ -52,15 +62,42 @@ export default {
         this.$router.push("/");
       } catch (error) {
         console.error("Erro ao fazer login:", error.message);
+        if (error.code === "auth/wrong-password") {
+          this.errorMessage = "Senha incorreta. Por favor, tente novamente.";
+        } else if (error.code === "auth/user-not-found") {
+          this.errorMessage = "Usuário não encontrado. Por favor, cadastre-se.";
+        } else if (error.code === "auth/invalid-email") {
+          this.errorMessage =
+            "Email inválido. Por favor, insira um email válido.";
+        } else {
+          this.errorMessage =
+            "Ocorreu um erro ao fazer login. Por favor, tente novamente.";
+        }
       }
     },
     async loginWithGoogle() {
       try {
         const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        // Salvar informações do usuário no Firestore
+        const userRef = doc(db, "usuarios", user.uid);
+        await setDoc(
+          userRef,
+          {
+            userId: user.uid,
+            nome: user.displayName,
+            email: user.email,
+          },
+          { merge: true }
+        );
+
         this.$router.push("/");
       } catch (error) {
         console.error("Erro ao fazer login com Google:", error.message);
+        this.errorMessage =
+          "Ocorreu um erro ao fazer login com Google. Por favor, tente novamente.";
       }
     },
   },
@@ -75,6 +112,7 @@ export default {
 }
 
 header {
+  margin-top: 10px;
   position: fixed;
   top: 0;
   width: 100%;
@@ -82,7 +120,6 @@ header {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   background-color: #fff;
   box-sizing: border-box;
-  margin-top: 10px;
 }
 
 .auth-content {
@@ -92,7 +129,7 @@ header {
   align-items: center;
   justify-content: center;
   padding-top: 100px; /* Ajuste para a altura do header */
-  padding-bottom: 340px; /* Ajuste para a altura do footer */
+  padding-bottom: 100px; /* Ajuste para a altura do footer */
 }
 
 .auth-form {
@@ -101,7 +138,6 @@ header {
 }
 
 footer {
-  position: fixed;
   bottom: 0;
   width: 100%;
   z-index: 1000;
@@ -112,12 +148,12 @@ footer {
 .login-icon {
   width: 120px; /* Três vezes maior */
   height: 120px;
-  margin-bottom: 1rem; /* Ajuste o espaço abaixo do ícone */
+  margin-bottom: 0.5rem; /* Ajuste o espaço abaixo do ícone */
 }
 
 .form-group {
   width: 100%;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 label {
@@ -146,6 +182,7 @@ input[type="password"] {
 button {
   cursor: pointer;
   border: none; /* Remove a borda padrão */
+  transition: transform 0.2s ease; /* Adiciona transição para o efeito hover */
 }
 
 .btn-primary {
@@ -163,7 +200,7 @@ button {
   align-items: center;
   justify-content: center;
   background-color: #ffffff;
-  color: #363636; /* Define a cor do texto para preto */
+  color: #000; /* Define a cor do texto para preto */
   border: 1px solid #ffffff;
 }
 
@@ -176,6 +213,11 @@ button {
   width: 20px;
   height: 20px;
   margin-left: 0.5rem; /* Adiciona espaço entre o texto e o ícone */
+}
+
+.error-message {
+  color: red;
+  margin-top: 1rem;
 }
 
 .register-link {
