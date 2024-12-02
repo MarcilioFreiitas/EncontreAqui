@@ -9,8 +9,8 @@ Esta aplicação web tem como objetivo conectar usuários a comércios e prestad
 ## 🛠️ Tecnologias Utilizadas
 
 - **Frontend**: Vue.js
-- **Backend**: Spring Framework
-- **Banco de Dados**: MySQL
+- **Backend**: Firebase
+- **Banco de Dados**: FireStorage
 
 ## ✨ Funcionalidades
 
