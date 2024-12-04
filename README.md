@@ -1,5 +1,7 @@
 # 🌟 Plataforma de Serviços e Comércios Locais 🌟
 
+![Captura de tela 2024-12-02 150026](https://github.com/user-attachments/assets/74e0084b-2b0e-43e3-ac7d-f96ef5113a79)
+
 ## 📄 Descrição
 
 Esta aplicação web tem como objetivo conectar usuários a comércios e prestadores de serviços em uma determinada região. A plataforma permite que os usuários procurem por diversos tipos de serviços, como pintores, motoristas, seguranças, manicures, entre outros. Comerciantes e prestadores de serviços podem se cadastrar na plataforma mediante um pagamento, promovendo seus serviços e aumentando sua visibilidade.
@@ -7,8 +9,8 @@ Esta aplicação web tem como objetivo conectar usuários a comércios e prestad
 ## 🛠️ Tecnologias Utilizadas
 
 - **Frontend**: Vue.js
-- **Backend**: Spring Framework
-- **Banco de Dados**: MySQL
+- **Backend**: Firebase
+- **Banco de Dados**: FireStorage
 
 ## ✨ Funcionalidades
 
