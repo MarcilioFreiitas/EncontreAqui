@@ -7,7 +7,10 @@ import CategoryPage from "@/pages/CategoryPage.vue";
 import ItemDetailPage from "@/pages/ItemDetailPage.vue";
 import LoginPage from "@/pages/LoginPage.vue";
 import RegisterPage from "@/pages/RegisterPage.vue";
-import SobrePage from "../pages/SobrePage.vue";
+import SobrePage from "@/pages/SobrePage.vue";
+import SearchResults from "@/pages/SearchResults.vue";
+import EncontrePage from "@/pages/EncontrePage.vue";
+import PostDetailPage from "@/pages/PostDetailPage.vue"; // Adicione a importação
 
 const routes = [
   { path: "/", component: HomePage },
@@ -27,6 +30,9 @@ const routes = [
   { path: "/login", component: LoginPage },
   { path: "/register", component: RegisterPage },
   { path: "/sobre", component: SobrePage },
+  { path: "/search", name: "SearchResults", component: SearchResults },
+  { path: "/encontre", component: EncontrePage },
+  { path: "/post/:id", name: "PostDetailPage", component: PostDetailPage }, // Adiciona a rota para PostDetailPage
 ];
 
 const router = createRouter({

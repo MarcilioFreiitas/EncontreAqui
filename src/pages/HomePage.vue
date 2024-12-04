@@ -45,6 +45,18 @@
           os proprietários.
         </p>
       </router-link>
+
+      <router-link to="/encontre" class="card">
+        <img src="@/assets/encontro.png" alt="Encontro" />
+        <h3>ENCONTRE E CONECTE</h3>
+        <p>
+          Precisa de um serviço específico ou está oferecendo algo especial?
+          Publique suas necessidades e ofertas na nossa plataforma e conecte-se
+          com outras pessoas na sua área. Permita que a comunidade saiba do que
+          você precisa ou o que você tem a oferecer, e juntos, criem um ambiente
+          de suporte e colaboração local.
+        </p>
+      </router-link>
     </div>
 
     <div class="logo-section">
@@ -244,6 +256,7 @@ onMounted(() => {
   width: 20px;
   height: 20px;
 }
+
 .cards {
   display: flex;
   justify-content: space-around;
@@ -255,7 +268,7 @@ onMounted(() => {
   background-color: #fff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 1rem;
-  width: 25%;
+  width: 20%;
   text-align: center;
   border-radius: 15px;
   transition: transform 0.3s, background-color 0.3s;
@@ -290,9 +303,9 @@ onMounted(() => {
 
 .section {
   display: flex;
-  width: 80%; /* Ajustado para 80% da largura */
+  width: 70%; /* Ajustado para 80% da largura */
   margin-bottom: 1rem; /* Espaço entre as seções */
-  padding: 2rem; /* Aumentar o padding */
+  padding: 4rem; /* Aumentar o padding */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Efeito profissional */
   transition: transform 0.3s;
 }
@@ -322,13 +335,15 @@ onMounted(() => {
 
 .form-section {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   width: 100%;
-  height: 60vh;
+  min-height: 90vh; /* Alterado para min-height */
   background: url("@/assets/banner2.jpg") no-repeat center center;
   background-size: cover;
   position: relative;
+  margin-top: 4rem; /* Adicionado espaço extra acima para não sobrepor o card anterior */
+  margin-bottom: 4rem; /* Adicionado espaço extra abaixo para não sobrepor o footer */
 }
 
 .form-overlay {
@@ -339,8 +354,9 @@ onMounted(() => {
   bottom: 0;
   background: rgba(0, 0, 0, 0.5); /* Efeito escuro */
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: center; /* Centraliza o conteúdo horizontalmente */
+  align-items: center; /* Centraliza o conteúdo verticalmente */
+  flex-direction: column; /* Organiza os itens em coluna */
 }
 
 .form-content {
@@ -350,7 +366,7 @@ onMounted(() => {
   width: 40%;
   max-width: 500px;
   text-align: center;
-  margin-left: 10rem; /* Espaçamento à esquerda */
+  margin-left: 0; /* Remove o espaçamento à esquerda */
 }
 
 .form-content h2 {
@@ -394,6 +410,7 @@ button {
   padding: 2rem;
   color: #fff;
   font-family: "Inter", sans-serif;
+  text-align: center; /* Centraliza o texto */
 }
 
 .contact-info h3 {
@@ -411,6 +428,9 @@ button {
     padding: 1rem;
     text-align: center;
   }
+  .logo-section img {
+    width: 150px; /* Tamanho do logo para telas menores */
+  }
 
   .cards {
     flex-direction: column;
@@ -424,23 +444,28 @@ button {
   }
 
   .sections {
-    padding: 1rem;
   }
 
   .section {
     width: 100%;
     flex-direction: column;
     align-items: center;
-    padding: 1rem;
   }
 
   .form-section {
     flex-direction: column;
-    height: auto;
+    min-height: 100vh; /* Garante que a altura mínima seja respeitada */
+    margin-top: 2rem; /* Ajuste o espaço acima para dispositivos móveis */
+    margin-bottom: 2rem; /* Ajuste o espaço abaixo para dispositivos móveis */
+  }
+
+  .form-overlay {
+    justify-content: center; /* Centraliza o conteúdo horizontalmente */
+    align-items: center; /* Centraliza o conteúdo verticalmente */
   }
 
   .form-content {
-    width: 80%;
+    width: 70%;
     margin-left: 0;
     margin-bottom: 1rem;
   }
@@ -448,6 +473,7 @@ button {
   .contact-info {
     width: 80%;
     padding: 1rem;
+    text-align: center; /* Centraliza o texto */
   }
 
   .footer {
@@ -467,7 +493,9 @@ button {
   .banner-content p {
     font-size: 1rem; /* Ajustar tamanho da fonte para dispositivos menores */
   }
-
+  .logo-section img {
+    width: 150px; /* Tamanho do logo para telas ainda menores */
+  }
   .form-content h2 {
     font-size: 1.2rem;
   }

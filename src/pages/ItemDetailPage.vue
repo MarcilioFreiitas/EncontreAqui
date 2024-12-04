@@ -8,29 +8,41 @@
     </div>
     <div class="reviews">
       <h3>Avaliações e Comentários</h3>
-      <div v-for="review in reviews" :key="review.id" class="review">
-        <p>
-          <strong>{{ review.userId }}:</strong> {{ review.comentario }}
-        </p>
-        <p>Avaliação: {{ review.avaliacao }} estrelas</p>
+      <div v-for="review in reviews" :key="review.id" class="review-card">
+        <img :src="review.userPhoto" alt="User Photo" class="user-photo" />
+        <div class="review-content">
+          <p>
+            <strong>{{ getUserName(review.userId) }}:</strong>
+            {{ review.comentario }}
+          </p>
+          <p>
+            Avaliação:
+            <span v-for="n in 5" :key="n" class="star">
+              <i
+                class="fa fa-star"
+                :class="n <= review.avaliacao ? 'checked' : ''"
+              ></i>
+            </span>
+          </p>
+        </div>
       </div>
       <div v-if="isAuthenticated">
         <h4>Deixe sua Avaliação</h4>
         <form @submit.prevent="submitReview">
           <div class="form-group">
             <label for="avaliacao">Avaliação (1-5)</label>
-            <input
-              type="number"
-              id="avaliacao"
-              v-model="avaliacao"
-              min="1"
-              max="5"
-              required
-            />
+            <div class="rating-input">
+              <span v-for="n in 5" :key="n" class="star" @click="avaliacao = n">
+                <i
+                  class="fa fa-star"
+                  :class="n <= avaliacao ? 'checked' : ''"
+                ></i>
+              </span>
+            </div>
           </div>
           <div class="form-group">
-            <label for="comentario">Comentário</label>
-            <textarea id="comentario" v-model="comentario" required></textarea>
+            <label for="comentario">Comentário (opcional)</label>
+            <textarea id="comentario" v-model="comentario"></textarea>
           </div>
           <button type="submit">Enviar</button>
         </form>
@@ -79,6 +91,8 @@ export default {
     const comentario = ref("");
     const isAuthenticated = ref(false);
     const userId = ref("");
+    const userNames = ref({});
+    const userPhotos = ref({});
 
     const fetchItemDetails = async () => {
       const collectionName =
@@ -109,15 +123,33 @@ export default {
       }));
     };
 
+    const fetchUserNamesAndPhotos = async () => {
+      const userSnapshot = await getDocs(collection(db, "usuarios"));
+      userSnapshot.forEach((doc) => {
+        userNames.value[doc.id] = doc.data().nome;
+        userPhotos.value[doc.id] = doc.data().userPhoto || "URL_DA_FOTO_PADRAO"; // Corrigir o campo para userPhoto
+      });
+    };
+
+    const getUserName = (userId) => {
+      return userNames.value[userId] || "Desconhecido";
+    };
+
+    const getUserPhoto = (userId) => {
+      return userPhotos.value[userId] || "URL_DA_FOTO_PADRAO";
+    };
+
     const submitReview = async () => {
       if (isAuthenticated.value) {
         try {
+          const userPhoto = getUserPhoto(userId.value); // Obtenha a URL da foto do usuário
           await addDoc(collection(db, "avaliacoes"), {
             userId: userId.value,
+            userPhoto: userPhoto, // Adicione a URL da foto do usuário
             itemId: itemId,
             tipoItem: type,
             avaliacao: avaliacao.value,
-            comentario: comentario.value,
+            comentario: comentario.value || "", // Comentário opcional
             timestamp: serverTimestamp(),
           });
           alert("Avaliação enviada com sucesso!");
@@ -139,15 +171,18 @@ export default {
       if (user) {
         isAuthenticated.value = true;
         userId.value = user.uid;
+        newComment.value.userPhoto = user.photoURL; // Certifique-se de armazenar a URL da foto do usuário
       } else {
         isAuthenticated.value = false;
         userId.value = "";
+        newComment.value.userPhoto = ""; // Limpa o campo de URL da foto do usuário
       }
     });
 
     onMounted(() => {
       fetchItemDetails();
       fetchReviews();
+      fetchUserNamesAndPhotos();
     });
 
     return {
@@ -157,33 +192,99 @@ export default {
       comentario,
       submitReview,
       isAuthenticated,
+      getUserName,
+      getUserPhoto,
     };
   },
 };
 </script>
 
 <style scoped>
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css");
+
 .item-details {
-  margin: 2rem;
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
   text-align: center;
 }
 
 .item-photo {
-  width: 200px;
+  width: 50%;
   height: auto;
   border-radius: 8px;
+  margin-bottom: 1rem;
 }
 
 .reviews {
-  margin: 2rem;
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
 }
 
-.review {
+.review-card {
+  display: flex;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
   margin-bottom: 1rem;
+  border-radius: 10px;
+  text-align: left;
+  color: #000;
+  text-decoration: none;
+}
+
+.review-card:hover {
+  background-color: #f0f0f0;
+}
+
+.user-photo {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 10px;
+  display: inline-block;
+}
+
+.review-content {
+  margin-left: 10px;
+}
+
+.review-card p {
+  margin: 1rem 0;
+}
+
+.star {
+  color: #ccc;
+  font-size: 1.2rem;
+  cursor: pointer;
+  margin-right: 0.1rem;
+}
+
+.star:hover,
+.checked {
+  color: #ffb400;
 }
 
 .form-group {
   margin-bottom: 1rem;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
 
 button {

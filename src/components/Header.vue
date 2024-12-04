@@ -4,15 +4,32 @@
       <img src="@/assets/logo.png" alt="Logo" class="logo" />
     </router-link>
     <div v-if="showSearch" class="search-bar">
-      <input type="text" placeholder="Pesquisar..." />
-      <img src="@/assets/lupa.png" alt="Pesquisar" class="search-icon" />
+      <input
+        type="text"
+        placeholder="Pesquisar..."
+        v-model="searchQuery"
+        @keyup.enter="search"
+      />
+      <img
+        src="@/assets/lupa.png"
+        alt="Pesquisar"
+        class="search-icon"
+        @click="search"
+      />
     </div>
     <nav class="nav">
       <ul class="nav-links">
+        <li>
+          <router-link to="/encontre"
+            ><i class="bi bi-people"></i> Encontre e Conecte</router-link
+          >
+        </li>
         <li><router-link to="/comercios">Comércio</router-link></li>
         <li><router-link to="/servicos">Serviços</router-link></li>
         <li><router-link to="/aluguels">Aluguéis</router-link></li>
         <li><router-link to="/sobre">Sobre</router-link></li>
+
+        <!-- Adicionando a nova opção -->
       </ul>
       <div v-if="isAuthenticated" class="user-section" @click="toggleDropdown">
         <img
@@ -34,6 +51,9 @@
 <script>
 import { ref, onMounted } from "vue";
 import { onAuthStateChanged, getAuth, signOut } from "firebase/auth";
+import { useRouter } from "vue-router";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../firebaseConfig";
 
 export default {
   name: "Header",
@@ -44,9 +64,11 @@ export default {
     },
   },
   setup() {
+    const router = useRouter();
     const isSticky = ref(false);
     const isAuthenticated = ref(false);
     const dropdownVisible = ref(false);
+    const searchQuery = ref("");
     const auth = getAuth();
 
     onMounted(() => {
@@ -74,6 +96,15 @@ export default {
       }
     };
 
+    const search = () => {
+      if (!searchQuery.value.trim()) return;
+
+      router.push({
+        name: "SearchResults",
+        query: { q: searchQuery.value.toLowerCase() }, // Converter para minúsculas
+      });
+    };
+
     return {
       isSticky,
       isAuthenticated,
@@ -81,6 +112,8 @@ export default {
       handleScroll,
       toggleDropdown,
       logout,
+      searchQuery,
+      search,
     };
   },
 };
@@ -103,7 +136,7 @@ export default {
 .sticky {
   position: fixed;
   top: 0;
-  width: 100%;
+  width: 99%;
   background-color: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
   z-index: 1000;
@@ -111,8 +144,8 @@ export default {
 }
 
 .logo {
-  height: 60px; /* Reduzir altura do logo */
-  width: 60px; /* Reduzir largura do logo */
+  height: 70px; /* Reduzir altura do logo */
+  width: 70px; /* Reduzir largura do logo */
   margin: 0;
 }
 
@@ -165,6 +198,7 @@ export default {
   align-items: center;
   position: relative;
   cursor: pointer;
+  margin-left: 1rem; /* Adicionar margem esquerda para espaçamento */
 }
 
 .user-icon {
@@ -240,7 +274,11 @@ export default {
 
   .cadastro-button {
     padding: 0.25rem 1rem;
-    margin-left: auto; /* Adicionar margem automática para o lado direito */
+    margin-left: 1rem; /* Adicionar margem esquerda para espaçamento */
+  }
+
+  .user-section {
+    margin-left: 1rem; /* Adicionar margem esquerda para espaçamento */
   }
 
   .sticky {
@@ -287,7 +325,9 @@ export default {
   }
 
   .search-bar {
-    width: 100%;
+    width: calc(
+      100% - 70px
+    ); /* Ajustar largura para dar espaço ao lado direito */
   }
 }
 </style>

@@ -89,6 +89,7 @@ export default {
             userId: user.uid,
             nome: user.displayName,
             email: user.email,
+            userPhoto: user.photoURL, // Adicionar a URL da foto do usuário
           },
           { merge: true }
         );
@@ -146,7 +147,7 @@ footer {
 }
 
 .login-icon {
-  width: 120px; /* Três vezes maior */
+  width: 120px;
   height: 120px;
   margin-bottom: 0.5rem; /* Ajuste o espaço abaixo do ícone */
 }
@@ -228,5 +229,53 @@ button {
 
 .register-link:hover {
   text-decoration: underline;
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+  .auth-content {
+    padding-top: 80px; /* Ajuste para a altura do header */
+    padding-bottom: 80px; /* Ajuste para a altura do footer */
+  }
+
+  .auth-form {
+    max-width: 300px; /* Reduzir o limite máximo de largura */
+  }
+
+  .login-icon {
+    width: 100px; /* Reduzir tamanho do ícone */
+    height: 100px;
+  }
+
+  input[type="email"],
+  input[type="password"],
+  button {
+    padding: 0.5rem; /* Reduzir o padding */
+    font-size: 0.9rem; /* Reduzir o tamanho da fonte */
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-content {
+    padding-top: 60px; /* Ajuste para a altura do header */
+    padding-bottom: 60px; /* Ajuste para a altura do footer */
+  }
+
+  .auth-form {
+    max-width: 70%; /* Ocupa toda a largura disponível */
+    padding: 0 1rem; /* Adicionar padding lateral */
+  }
+
+  .login-icon {
+    width: 80px; /* Reduzir ainda mais o tamanho do ícone */
+    height: 80px;
+  }
+
+  input[type="email"],
+  input[type="password"],
+  button {
+    padding: 0.5rem; /* Manter o padding reduzido */
+    /* Reduzir ainda mais o tamanho da fonte */
+  }
 }
 </style>
