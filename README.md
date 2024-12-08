@@ -1,6 +1,6 @@
 # 🌟 Plataforma de Serviços e Comércios Locais 🌟
 
-![Captura de tela 2024-12-08 121706](https://github.com/user-attachments/assets/dca5ba35-e1ca-45c3-bcb3-09a5c7615611)
+![Captura de tela 2024-12-08 121851](https://github.com/user-attachments/assets/2f2cc8ea-a282-4d56-8fec-1b2a4b504089)
 
 ![Captura de tela 2024-12-08 121718](https://github.com/user-attachments/assets/e06faccb-dc39-423e-a612-66ec1d272233)
 
