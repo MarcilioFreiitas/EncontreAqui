@@ -2,7 +2,7 @@
 
 ![Captura de tela 2024-12-08 121851](https://github.com/user-attachments/assets/2f2cc8ea-a282-4d56-8fec-1b2a4b504089)
 
-![Captura de tela 2024-12-08 121718](https://github.com/user-attachments/assets/e06faccb-dc39-423e-a612-66ec1d272233)
+![Captura de tela 2024-12-08 121934](https://github.com/user-attachments/assets/395ce20c-519d-4323-a963-4c96e0f9f9c2)
 
 ## 📄 Descrição
 
