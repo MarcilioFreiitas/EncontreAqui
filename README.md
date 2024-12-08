@@ -1,6 +1,9 @@
 # 🌟 Plataforma de Serviços e Comércios Locais 🌟
 
-![Captura de tela 2024-12-04 145729](https://github.com/user-attachments/assets/d0d823fd-a7a0-496c-8629-9bc16657c4e9)
+![Captura de tela 2024-12-08 121706](https://github.com/user-attachments/assets/dca5ba35-e1ca-45c3-bcb3-09a5c7615611)
+
+![Captura de tela 2024-12-08 121718](https://github.com/user-attachments/assets/e06faccb-dc39-423e-a612-66ec1d272233)
+
 ## 📄 Descrição
 
 Esta aplicação web tem como objetivo conectar usuários a comércios e prestadores de serviços em uma determinada região. A plataforma permite que os usuários procurem por diversos tipos de serviços, como pintores, motoristas, seguranças, manicures, entre outros. Comerciantes e prestadores de serviços podem se cadastrar na plataforma mediante um pagamento, promovendo seus serviços e aumentando sua visibilidade.
