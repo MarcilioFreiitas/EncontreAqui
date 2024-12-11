@@ -52,9 +52,25 @@
         <p>
           Precisa de um serviço específico ou está oferecendo algo especial?
           Publique suas necessidades e ofertas na nossa plataforma e conecte-se
-          com outras pessoas na sua área. Permita que a comunidade saiba do que
-          você precisa ou o que você tem a oferecer, e juntos, criem um ambiente
-          de suporte e colaboração local.
+          com outras pessoas na sua área.
+        </p>
+      </router-link>
+
+      <router-link to="/vendas" class="card">
+        <img src="@/assets/venda.png" alt="Venda" />
+        <h3>VENDA</h3>
+        <p>
+          Encontre as melhores ofertas de venda na sua região. Produtos de
+          qualidade esperando por você.
+        </p>
+      </router-link>
+
+      <router-link to="/viagem" class="card">
+        <img src="@/assets/viajem.png" alt="Viagem Compartilhada" />
+        <h3>VIAGEM COMPARTILHADA</h3>
+        <p>
+          Descubra opções de viagens compartilhadas para economizar e conhecer
+          novas pessoas durante suas viagens.
         </p>
       </router-link>
     </div>
@@ -69,9 +85,7 @@
           <h3>Confiança</h3>
           <p>
             Nosso sistema é projetado para garantir total confiança, oferecendo
-            segurança e transparência em cada interação. Conectamos você aos
-            melhores comerciantes e prestadores de serviços locais, confiáveis e
-            comprometidos com a qualidade.
+            segurança e transparência em cada interação.
           </p>
         </div>
       </div>
@@ -80,10 +94,8 @@
         <div class="section-content">
           <h3>Credibilidade</h3>
           <p>
-            Com anos de experiência e um compromisso inabalável com a
-            excelência, nosso sistema é sinônimo de credibilidade. Fornecemos
-            informações precisas e verificadas para que você possa tomar
-            decisões informadas e seguras.
+            Fornecemos informações precisas e verificadas para que você possa
+            tomar decisões informadas e seguras.
           </p>
         </div>
       </div>
@@ -93,9 +105,7 @@
           <h3>Ética</h3>
           <p>
             Nossa plataforma opera com os mais altos padrões éticos, promovendo
-            justiça, honestidade e responsabilidade. Priorizamos a integridade
-            em todas as nossas ações para garantir uma experiência justa e
-            respeitosa para todos os usuários.
+            justiça, honestidade e responsabilidade.
           </p>
         </div>
       </div>
@@ -258,8 +268,9 @@ onMounted(() => {
 }
 
 .cards {
-  display: flex;
-  justify-content: space-around;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* Define 3 colunas */
+  gap: 1rem;
   margin-top: -4rem;
   padding: 2rem;
 }
@@ -267,13 +278,13 @@ onMounted(() => {
 .card {
   background-color: #fff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  padding: 1rem;
-  width: 20%;
+  padding: 1.5rem; /* Aumentar o padding */
   text-align: center;
   border-radius: 15px;
   transition: transform 0.3s, background-color 0.3s;
-  text-decoration: none; /* Remove a sublinhado */
+  text-decoration: none; /* Remove o sublinhado */
   color: inherit; /* Mantém a cor do texto */
+  width: calc(100% - 100px); /* Reduzir a largura */
 }
 
 .card:hover {
@@ -282,7 +293,7 @@ onMounted(() => {
 }
 
 .card img {
-  height: 50px;
+  height: 70px; /* Aumentar a altura da imagem */
 }
 
 .logo-section {
@@ -433,8 +444,8 @@ button {
   }
 
   .cards {
-    flex-direction: column;
-    align-items: center;
+    grid-template-columns: 1fr; /* Definir 1 coluna em telas menores */
+    gap: 1rem;
     margin-top: 1rem;
   }
 
@@ -491,7 +502,7 @@ button {
   .banner-content h1,
   .banner-content h2,
   .banner-content p {
-    font-size: 1rem; /* Ajustar tamanho da fonte para dispositivos menores */
+    font-size: 1.3rem; /* Ajustar tamanho da fonte para dispositivos menores */
   }
   .logo-section img {
     width: 150px; /* Tamanho do logo para telas ainda menores */

@@ -10,7 +10,13 @@ import RegisterPage from "@/pages/RegisterPage.vue";
 import SobrePage from "@/pages/SobrePage.vue";
 import SearchResults from "@/pages/SearchResults.vue";
 import EncontrePage from "@/pages/EncontrePage.vue";
-import PostDetailPage from "@/pages/PostDetailPage.vue"; // Adicione a importação
+import PostDetailPage from "@/pages/PostDetailPage.vue";
+import VendasPage from "@/pages/VendasPage.vue";
+
+import ViagemPage from "../pages/ViagemPage.vue";
+import ViagemDetailPage from "@/pages/ViagemDetailPage.vue";
+import VendasDatailPage from "../pages/VendasDetailPage.vue";
+import VendasDetailPage from "../pages/VendasDetailPage.vue";
 
 const routes = [
   { path: "/", component: HomePage },
@@ -32,7 +38,19 @@ const routes = [
   { path: "/sobre", component: SobrePage },
   { path: "/search", name: "SearchResults", component: SearchResults },
   { path: "/encontre", component: EncontrePage },
-  { path: "/post/:id", name: "PostDetailPage", component: PostDetailPage }, // Adiciona a rota para PostDetailPage
+  { path: "/post/:id", name: "PostDetailPage", component: PostDetailPage },
+  { path: "/vendas", component: VendasPage },
+  {
+    path: "/vendas/:id",
+    name: "VendasDetailPage",
+    component: VendasDetailPage,
+  },
+  { path: "/viagem", component: ViagemPage },
+  {
+    path: "/viagem/:id",
+    name: "ViagemDetailPage",
+    component: ViagemDetailPage,
+  },
 ];
 
 const router = createRouter({

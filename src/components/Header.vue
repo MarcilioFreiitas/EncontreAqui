@@ -27,6 +27,8 @@
         <li><router-link to="/comercios">Comércio</router-link></li>
         <li><router-link to="/servicos">Serviços</router-link></li>
         <li><router-link to="/aluguels">Aluguéis</router-link></li>
+        <li><router-link to="/vendas">Vendas</router-link></li>
+        <li><router-link to="/viagem">Viagem Compartilhada</router-link></li>
         <li><router-link to="/sobre">Sobre</router-link></li>
 
         <!-- Adicionando a nova opção -->
