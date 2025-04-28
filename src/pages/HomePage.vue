@@ -10,9 +10,9 @@
           comércios, serviços e aluguéis na sua cidade.
         </p>
         <p>Conectando com você o que há de melhor perto de você.</p>
-        <router-link to="/sobre" class="saiba-mais-button"
-          >Saiba mais</router-link
-        >
+        <router-link to="/sobre" class="saiba-mais-button">
+          Saiba mais
+        </router-link>
       </div>
     </div>
     <div class="cards">
@@ -25,7 +25,6 @@
           pertinho de você.
         </p>
       </router-link>
-
       <router-link to="/servicos" class="card">
         <img src="@/assets/servico.png" alt="Serviços" />
         <h3>SERVIÇOS</h3>
@@ -35,7 +34,6 @@
           cidade, prontos para te atender.
         </p>
       </router-link>
-
       <router-link to="/aluguels" class="card">
         <img src="@/assets/aluguel.png" alt="Aluguéis" />
         <h3>ALUGUÉIS</h3>
@@ -45,36 +43,7 @@
           os proprietários.
         </p>
       </router-link>
-
-      <router-link to="/encontre" class="card">
-        <img src="@/assets/encontro.png" alt="Encontro" />
-        <h3>ENCONTRE E CONECTE</h3>
-        <p>
-          Precisa de um serviço específico ou está oferecendo algo especial?
-          Publique suas necessidades e ofertas na nossa plataforma e conecte-se
-          com outras pessoas na sua área.
-        </p>
-      </router-link>
-
-      <router-link to="/vendas" class="card">
-        <img src="@/assets/venda.png" alt="Venda" />
-        <h3>VENDA</h3>
-        <p>
-          Encontre as melhores ofertas de venda na sua região. Produtos de
-          qualidade esperando por você.
-        </p>
-      </router-link>
-
-      <router-link to="/viagem" class="card">
-        <img src="@/assets/viajem.png" alt="Viagem Compartilhada" />
-        <h3>VIAGEM COMPARTILHADA</h3>
-        <p>
-          Descubra opções de viagens compartilhadas para economizar e conhecer
-          novas pessoas durante suas viagens.
-        </p>
-      </router-link>
     </div>
-
     <div class="logo-section">
       <img src="@/assets/logo.png" alt="Logo" />
     </div>
@@ -114,18 +83,37 @@
       <div class="form-overlay">
         <div class="form-content">
           <h2>Entre em contato conosco</h2>
+          <!-- Exibe mensagens de erro, se houver -->
+          <div v-if="errors.length" class="error-messages">
+            <ul>
+              <li v-for="(error, index) in errors" :key="index">{{ error }}</li>
+            </ul>
+          </div>
           <form @submit.prevent="submitForm">
             <div class="form-group">
               <label for="name">Nome</label>
-              <input type="text" id="name" v-model="nome" />
+              <!-- v-model.trim remove espaços extras -->
+              <input
+                type="text"
+                id="name"
+                v-model.trim="nome"
+                required
+                maxlength="100"
+              />
             </div>
             <div class="form-group">
               <label for="email">Email</label>
-              <input type="email" id="email" v-model="email" />
+              <input type="email" id="email" v-model.trim="email" required />
             </div>
             <div class="form-group">
               <label for="message">Mensagem</label>
-              <textarea id="message" v-model="mensagem"></textarea>
+              <textarea
+                id="message"
+                v-model.trim="mensagem"
+                required
+                minlength="10"
+                maxlength="1000"
+              ></textarea>
             </div>
             <button type="submit">Enviar</button>
           </form>
@@ -138,7 +126,6 @@
         </div>
       </div>
     </div>
-
     <router-view />
     <Footer />
   </div>
@@ -159,15 +146,49 @@ const isAuthenticated = ref(false);
 const nome = ref("");
 const email = ref("");
 const mensagem = ref("");
+const errors = ref([]);
+
+// Função de sanitização básica para remover tags HTML indesejadas.
+const sanitize = (input) => {
+  return input.replace(/<[^>]*>?/gm, "");
+};
 
 const submitForm = async () => {
+  errors.value = [];
+
+  // Validações básicas de segurança e preenchimento
+  if (!nome.value.trim()) {
+    errors.value.push("Nome é obrigatório.");
+  }
+  if (!email.value.trim()) {
+    errors.value.push("Email é obrigatório.");
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+    errors.value.push("Email inválido.");
+  }
+  if (!mensagem.value.trim()) {
+    errors.value.push("Mensagem é obrigatória.");
+  } else if (mensagem.value.trim().length < 10) {
+    errors.value.push("A mensagem deve ter pelo menos 10 caracteres.");
+  }
+
+  if (errors.value.length) {
+    return;
+  }
+
+  // Sanitiza os dados para remover possíveis scripts e HTML indesejado
+  const sanitizedNome = sanitize(nome.value.trim());
+  const sanitizedEmail = sanitize(email.value.trim());
+  const sanitizedMensagem = sanitize(mensagem.value.trim());
+
   try {
     await addDoc(collection(db, "contatos"), {
-      nome: nome.value,
-      email: email.value,
-      mensagem: mensagem.value,
+      nome: sanitizedNome,
+      email: sanitizedEmail,
+      mensagem: sanitizedMensagem,
+      timestamp: new Date(),
     });
     alert("Mensagem enviada com sucesso!");
+    // Limpa os campos após o sucesso
     nome.value = "";
     email.value = "";
     mensagem.value = "";

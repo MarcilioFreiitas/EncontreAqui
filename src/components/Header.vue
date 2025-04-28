@@ -19,43 +19,33 @@
     </div>
     <nav class="nav">
       <ul class="nav-links">
-        <li>
-          <router-link to="/encontre"
-            ><i class="bi bi-people"></i> Encontre e Conecte</router-link
-          >
-        </li>
         <li><router-link to="/comercios">Comércio</router-link></li>
         <li><router-link to="/servicos">Serviços</router-link></li>
         <li><router-link to="/aluguels">Aluguéis</router-link></li>
-        <li><router-link to="/vendas">Vendas</router-link></li>
-        <li><router-link to="/viagem">Viagem Compartilhada</router-link></li>
         <li><router-link to="/sobre">Sobre</router-link></li>
-
-        <!-- Adicionando a nova opção -->
       </ul>
-      <div v-if="isAuthenticated" class="user-section" @click="toggleDropdown">
+      <div
+        v-if="userStore.isAuthenticated"
+        class="user-section"
+        @click="goToProfile"
+      >
         <img
           src="@/assets/do-utilizador.png"
           alt="User Icon"
           class="user-icon"
         />
-        <div v-if="dropdownVisible" class="dropdown-menu">
-          <button @click="logout" class="dropdown-item">Sair</button>
-        </div>
       </div>
-      <router-link v-else to="/login" class="cadastro-button"
-        >Login</router-link
-      >
+      <router-link v-else to="/login" class="cadastro-button">
+        Login
+      </router-link>
     </nav>
   </header>
 </template>
 
 <script>
-import { ref, onMounted } from "vue";
-import { onAuthStateChanged, getAuth, signOut } from "firebase/auth";
+import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../firebaseConfig";
+import { useUserStore } from "@/stores/user";
 
 export default {
   name: "Header",
@@ -65,57 +55,48 @@ export default {
       default: false,
     },
   },
-  setup() {
+  setup(props, { emit }) {
     const router = useRouter();
+    const userStore = useUserStore();
     const isSticky = ref(false);
-    const isAuthenticated = ref(false);
-    const dropdownVisible = ref(false);
     const searchQuery = ref("");
-    const auth = getAuth();
 
-    onMounted(() => {
-      window.addEventListener("scroll", handleScroll);
-      onAuthStateChanged(auth, (user) => {
-        isAuthenticated.value = !!user;
-      });
-    });
-
+    // Atualiza o estado sticky conforme o scroll
     const handleScroll = () => {
       isSticky.value = window.scrollY > 50;
     };
 
-    const toggleDropdown = () => {
-      dropdownVisible.value = !dropdownVisible.value;
-    };
+    onMounted(() => {
+      window.addEventListener("scroll", handleScroll);
+      window.addEventListener("storage", () => {
+        const token = localStorage.getItem("token");
+        userStore.setToken(token);
+      });
+    });
 
-    const logout = async () => {
-      try {
-        await signOut(auth);
-        isAuthenticated.value = false;
-        dropdownVisible.value = false;
-      } catch (error) {
-        console.error("Erro ao fazer logout: ", error);
-      }
+    onUnmounted(() => {
+      window.removeEventListener("scroll", handleScroll);
+    });
+
+    const goToProfile = () => {
+      router.push("/profile");
     };
 
     const search = () => {
       if (!searchQuery.value.trim()) return;
-
-      router.push({
-        name: "SearchResults",
-        query: { q: searchQuery.value.toLowerCase() }, // Converter para minúsculas
-      });
+      // Emite o evento "searched" com o valor da pesquisa
+      emit("searched", searchQuery.value.toLowerCase());
+      // Se desejar manter o redirecionamento para a página de resultados, pode descomentar a linha abaixo:
+      // router.push({ name: "SearchResults", query: { q: searchQuery.value.toLowerCase() } });
     };
 
     return {
       isSticky,
-      isAuthenticated,
-      dropdownVisible,
-      handleScroll,
-      toggleDropdown,
-      logout,
       searchQuery,
+      goToProfile,
       search,
+      showSearch: props.showSearch,
+      userStore,
     };
   },
 };
@@ -128,7 +109,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 1rem; /* Reduzir padding */
+  padding: 0.5rem 1rem;
   background-color: #fff;
   font-family: "Inter", sans-serif;
   transition: all 0.3s ease;
@@ -146,8 +127,8 @@ export default {
 }
 
 .logo {
-  height: 70px; /* Reduzir altura do logo */
-  width: 70px; /* Reduzir largura do logo */
+  height: 70px;
+  width: 70px;
   margin: 0;
 }
 
@@ -165,7 +146,7 @@ export default {
 .nav-links {
   display: flex;
   gap: 1rem;
-  list-style-type: none;
+  list-style: none;
   margin: 0;
 }
 
@@ -183,8 +164,8 @@ export default {
 .cadastro-button {
   background-color: #000;
   color: #fff;
-  padding: 0.5rem 0.5rem; /* Reduzir padding */
-  border-radius: 10px; /* Reduzir borda */
+  padding: 0.5rem 0.5rem;
+  border-radius: 10px;
   text-decoration: none;
   font-family: "Inter", sans-serif;
   transition: background-color 0.3s, transform 0.3s;
@@ -198,39 +179,13 @@ export default {
 .user-section {
   display: flex;
   align-items: center;
-  position: relative;
   cursor: pointer;
-  margin-left: 1rem; /* Adicionar margem esquerda para espaçamento */
+  margin-left: 1rem;
 }
 
 .user-icon {
-  width: 25px; /* Reduzir tamanho do ícone */
-  height: 25px; /* Reduzir tamanho do ícone */
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background-color: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 5px;
-  overflow: hidden;
-  z-index: 1001;
-}
-
-.dropdown-item {
-  padding: 0.5rem 1rem;
-  background-color: #fff;
-  border: none;
-  cursor: pointer;
-  width: 100%;
-  text-align: left;
-  transition: background-color 0.3s;
-}
-
-.dropdown-item:hover {
-  background-color: #f0f0f0;
+  width: 25px;
+  height: 25px;
 }
 
 .search-bar {
@@ -238,7 +193,7 @@ export default {
   align-items: center;
   justify-content: center;
   background-color: #fcf8f8;
-  padding: 0.25rem; /* Reduzir padding */
+  padding: 0.25rem;
   border-radius: 15px;
   width: 50%;
 }
@@ -248,7 +203,7 @@ export default {
   background: none;
   outline: none;
   padding: 0.25rem;
-  font-size: 0.9rem; /* Reduzir tamanho da fonte */
+  font-size: 0.9rem;
   flex-grow: 1;
 }
 
@@ -262,57 +217,30 @@ export default {
   .header {
     flex-direction: row;
     height: auto;
-    padding: 0.5rem; /* Ajustar padding */
+    padding: 0.5rem;
   }
-
   .logo {
-    height: 50px; /* Reduzir ainda mais para dispositivos móveis */
+    height: 50px;
     width: 50px;
   }
-
   .nav {
     justify-content: center;
   }
-
   .cadastro-button {
     padding: 0.25rem 1rem;
-    margin-left: 1rem; /* Adicionar margem esquerda para espaçamento */
+    margin-left: 1rem;
   }
-
   .user-section {
-    margin-left: 1rem; /* Adicionar margem esquerda para espaçamento */
+    margin-left: 1rem;
   }
-
   .sticky {
     position: static;
     background-color: transparent;
     box-shadow: none;
     backdrop-filter: none;
   }
-
   .nav-links {
     display: none;
-  }
-
-  .drawer {
-    display: block;
-  }
-
-  .drawer .v-list-item {
-    display: flex;
-    justify-content: center;
-  }
-
-  .drawer .v-list-item a {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    padding: 1rem;
-    text-decoration: none;
-    color: inherit;
-    font-size: 1.1rem;
-    font-family: "Inter", sans-serif;
   }
 }
 
@@ -321,15 +249,11 @@ export default {
     flex-direction: column;
     gap: 1rem;
   }
-
   .nav-links li a {
     font-size: 0.9rem;
   }
-
   .search-bar {
-    width: calc(
-      100% - 70px
-    ); /* Ajustar largura para dar espaço ao lado direito */
+    width: calc(100% - 70px);
   }
 }
 </style>

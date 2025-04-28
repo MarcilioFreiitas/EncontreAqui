@@ -23,89 +23,120 @@
         </button>
       </form>
       <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
-      <router-link to="/register" class="register-link"
-        >Não tem uma conta? Cadastre-se</router-link
-      >
+      <router-link to="/register" class="register-link">
+        Não tem uma conta? Cadastre-se
+      </router-link>
     </div>
     <Footer />
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import axios from "axios";
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
-import {
-  signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-} from "firebase/auth";
+import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
 import { doc, setDoc } from "firebase/firestore";
+import { useUserStore } from "@/stores/user";
 
-export default {
-  name: "LoginPage",
-  components: {
-    Header,
-    Footer,
-  },
-  data() {
-    return {
-      email: "",
-      password: "",
-      errorMessage: "",
-    };
-  },
-  methods: {
-    async login() {
-      try {
-        await signInWithEmailAndPassword(auth, this.email, this.password);
-        this.$router.push("/");
-      } catch (error) {
-        console.error("Erro ao fazer login:", error.message);
-        if (error.code === "auth/wrong-password") {
-          this.errorMessage = "Senha incorreta. Por favor, tente novamente.";
-        } else if (error.code === "auth/user-not-found") {
-          this.errorMessage = "Usuário não encontrado. Por favor, cadastre-se.";
-        } else if (error.code === "auth/invalid-email") {
-          this.errorMessage =
-            "Email inválido. Por favor, insira um email válido.";
-        } else {
-          this.errorMessage =
-            "Ocorreu um erro ao fazer login. Por favor, tente novamente.";
-        }
+const email = ref("");
+const password = ref("");
+const errorMessage = ref("");
+const router = useRouter();
+const userStore = useUserStore();
+
+const validateLogin = () => {
+  errorMessage.value = "";
+  const trimmedEmail = email.value.trim();
+  const trimmedPassword = password.value.trim();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!trimmedEmail) {
+    errorMessage.value = "O campo email é obrigatório.";
+    return false;
+  }
+  if (!emailRegex.test(trimmedEmail)) {
+    errorMessage.value = "Por favor, insira um email válido.";
+    return false;
+  }
+  if (!trimmedPassword) {
+    errorMessage.value = "O campo senha é obrigatório.";
+    return false;
+  }
+  if (trimmedPassword.length < 6) {
+    errorMessage.value = "A senha deve ter no mínimo 6 caracteres.";
+    return false;
+  }
+  return true;
+};
+
+const login = async () => {
+  if (!validateLogin()) return;
+  try {
+    // Envia os dados para o backend
+    const response = await axios.post(
+      "http://localhost:8080/api/usuarios/login",
+      {
+        email: email.value,
+        senha: password.value,
       }
-    },
-    async loginWithGoogle() {
-      try {
-        const provider = new GoogleAuthProvider();
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
+    );
+    // Supondo que o backend retorne um objeto com { token: "...." }
+    const token = response.data.token;
+    localStorage.setItem("token", token);
+    // Armazena o token na store
+    userStore.setToken(token);
+    // Adicione logs para verificar as informações do token extraídas pela store
+    console.log("Token armazenado:", token);
+    console.log("Dados extraídos na store:");
+    console.log("ID:", userStore.userId);
+    console.log("Nome:", userStore.firstName);
+    console.log("Sobrenome:", userStore.lastName);
+    console.log("Email:", userStore.email);
+    router.push("/");
+  } catch (error) {
+    console.error("Erro ao fazer login:", error.response || error);
+    if (error.response && error.response.status === 401) {
+      errorMessage.value =
+        "Credenciais inválidas. Verifique seu email ou senha.";
+    } else {
+      errorMessage.value =
+        "Ocorreu um erro ao fazer login. Por favor, tente novamente.";
+    }
+  }
+};
 
-        // Salvar informações do usuário no Firestore
-        const userRef = doc(db, "usuarios", user.uid);
-        await setDoc(
-          userRef,
-          {
-            userId: user.uid,
-            nome: user.displayName,
-            email: user.email,
-            userPhoto: user.photoURL, // Adicionar a URL da foto do usuário
-          },
-          { merge: true }
-        );
-
-        this.$router.push("/");
-      } catch (error) {
-        console.error("Erro ao fazer login com Google:", error.message);
-        this.errorMessage =
-          "Ocorreu um erro ao fazer login com Google. Por favor, tente novamente.";
-      }
-    },
-  },
+const loginWithGoogle = async () => {
+  try {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+    const userRef = doc(db, "usuarios", user.uid);
+    await setDoc(
+      userRef,
+      {
+        userId: user.uid,
+        nome: user.displayName,
+        email: user.email,
+        userPhoto: user.photoURL,
+      },
+      { merge: true }
+    );
+    // Para o login com Google, você pode optar por um fluxo específico.
+    // Aqui, você redireciona para a página principal.
+    router.push("/");
+  } catch (error) {
+    console.error("Erro ao fazer login com Google:", error.message);
+    errorMessage.value =
+      "Ocorreu um erro ao fazer login com Google. Por favor, tente novamente.";
+  }
 };
 </script>
 
 <style scoped>
+/* Seus estilos existentes para LoginPage permanecem */
 .auth-container {
   display: flex;
   flex-direction: column;
@@ -129,27 +160,19 @@ header {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding-top: 100px; /* Ajuste para a altura do header */
-  padding-bottom: 100px; /* Ajuste para a altura do footer */
+  padding-top: 100px;
+  padding-bottom: 100px;
 }
 
 .auth-form {
-  width: 100%; /* Garante que o formulário ocupe 100% da largura disponível */
-  max-width: 400px; /* Define um limite máximo de largura */
-}
-
-footer {
-  bottom: 0;
   width: 100%;
-  z-index: 1000;
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-  background-color: #fff;
+  max-width: 400px;
 }
 
 .login-icon {
   width: 120px;
   height: 120px;
-  margin-bottom: 0.5rem; /* Ajuste o espaço abaixo do ícone */
+  margin-bottom: 0.5rem;
 }
 
 .form-group {
@@ -166,8 +189,8 @@ label {
 input[type="email"],
 input[type="password"],
 button {
-  width: 100%; /* Garante que os botões e inputs ocupem 100% da largura do form */
-  box-sizing: border-box; /* Inclui padding e border na largura total */
+  width: 100%;
+  box-sizing: border-box;
   padding: 0.75rem;
   border: 1px solid #ccc;
   border-radius: 5px;
@@ -175,25 +198,16 @@ button {
   margin-top: 1rem;
 }
 
-input[type="email"],
-input[type="password"] {
-  margin-top: 0; /* Remove a margem superior dos inputs */
-}
-
-button {
-  cursor: pointer;
-  border: none; /* Remove a borda padrão */
-  transition: transform 0.2s ease; /* Adiciona transição para o efeito hover */
-}
-
 .btn-primary {
   background-color: #000;
   color: #fff;
-  border: 1px solid #000; /* Adiciona borda preta */
+  border: 1px solid #000;
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
 
 .btn-primary:hover {
-  background-color: #333; /* Efeito hover */
+  background-color: #333;
 }
 
 .btn-secondary {
@@ -201,19 +215,19 @@ button {
   align-items: center;
   justify-content: center;
   background-color: #ffffff;
-  color: #000; /* Define a cor do texto para preto */
+  color: #000;
   border: 1px solid #ffffff;
 }
 
 .btn-secondary:hover {
   background-color: #fcfcfc;
-  transform: scale(1.05); /* Aumenta o tamanho do botão e do conteúdo em 5% */
+  transform: scale(1.05);
 }
 
 .google-icon {
   width: 20px;
   height: 20px;
-  margin-left: 0.5rem; /* Adiciona espaço entre o texto e o ícone */
+  margin-left: 0.5rem;
 }
 
 .error-message {
@@ -222,7 +236,7 @@ button {
 }
 
 .register-link {
-  margin-top: 2rem; /* Aumentado o espaço entre o form e o footer */
+  margin-top: 2rem;
   color: #007bff;
   text-decoration: none;
 }
@@ -234,48 +248,41 @@ button {
 /* Estilos responsivos */
 @media (max-width: 768px) {
   .auth-content {
-    padding-top: 80px; /* Ajuste para a altura do header */
-    padding-bottom: 80px; /* Ajuste para a altura do footer */
+    padding-top: 80px;
+    padding-bottom: 80px;
   }
-
   .auth-form {
-    max-width: 300px; /* Reduzir o limite máximo de largura */
+    max-width: 300px;
   }
-
   .login-icon {
-    width: 100px; /* Reduzir tamanho do ícone */
+    width: 100px;
     height: 100px;
   }
-
   input[type="email"],
   input[type="password"],
   button {
-    padding: 0.5rem; /* Reduzir o padding */
-    font-size: 0.9rem; /* Reduzir o tamanho da fonte */
+    padding: 0.5rem;
+    font-size: 0.9rem;
   }
 }
 
 @media (max-width: 480px) {
   .auth-content {
-    padding-top: 60px; /* Ajuste para a altura do header */
-    padding-bottom: 60px; /* Ajuste para a altura do footer */
+    padding-top: 60px;
+    padding-bottom: 60px;
   }
-
   .auth-form {
-    max-width: 70%; /* Ocupa toda a largura disponível */
-    padding: 0 1rem; /* Adicionar padding lateral */
+    max-width: 70%;
+    padding: 0 1rem;
   }
-
   .login-icon {
-    width: 80px; /* Reduzir ainda mais o tamanho do ícone */
+    width: 80px;
     height: 80px;
   }
-
   input[type="email"],
   input[type="password"],
   button {
-    padding: 0.5rem; /* Manter o padding reduzido */
-    /* Reduzir ainda mais o tamanho da fonte */
+    padding: 0.5rem;
   }
 }
 </style>

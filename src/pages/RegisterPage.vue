@@ -6,21 +6,50 @@
       <form @submit.prevent="register" class="auth-form">
         <div class="form-group">
           <label for="firstName">Nome</label>
-          <input type="text" id="firstName" v-model="firstName" required />
+          <input
+            type="text"
+            id="firstName"
+            v-model="firstName"
+            required
+            maxlength="50"
+            size="30"
+          />
         </div>
         <div class="form-group">
           <label for="lastName">Sobrenome</label>
-          <input type="text" id="lastName" v-model="lastName" required />
+          <input
+            type="text"
+            id="lastName"
+            v-model="lastName"
+            required
+            maxlength="50"
+            size="30"
+          />
         </div>
         <div class="form-group">
           <label for="email">Email</label>
-          <input type="email" id="email" v-model="email" required />
+          <input
+            type="email"
+            id="email"
+            v-model="email"
+            required
+            maxlength="100"
+            size="30"
+          />
         </div>
         <div class="form-group">
           <label for="password">Senha</label>
-          <input type="password" id="password" v-model="password" required />
+          <input
+            type="password"
+            id="password"
+            v-model="password"
+            required
+            maxlength="30"
+            size="30"
+          />
         </div>
         <button type="submit" class="btn-primary">Cadastrar</button>
+        <!-- Botão para cadastro com Google -->
         <button type="button" class="btn-secondary" @click="registerWithGoogle">
           Entrar com
           <img
@@ -30,27 +59,31 @@
           />
         </button>
       </form>
-      <router-link to="/login" class="register-link"
-        >Já tem uma conta? Faça login</router-link
-      >
+      <router-link to="/login" class="register-link">
+        Já tem uma conta? Faça login
+      </router-link>
+      <p v-if="error" class="error-message">{{ error }}</p>
     </div>
     <Footer />
   </div>
 </template>
 
 <script>
+// Importa os componentes e bibliotecas necessárias
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signOut,
-  GoogleAuthProvider,
-  signInWithPopup,
-} from "firebase/auth";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
+import axios from "axios";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+
+// Importações para o fluxo de cadastro com Google via Firebase
+import {
+  getAuth,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut,
+} from "firebase/auth";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
 
 export default {
   name: "RegisterPage",
@@ -59,54 +92,111 @@ export default {
     Footer,
   },
   setup() {
+    // Propriedades reativas para o cadastro via backend
     const firstName = ref("");
     const lastName = ref("");
     const email = ref("");
     const password = ref("");
+    const error = ref("");
     const router = useRouter();
+
+    // Para o fluxo com Google via Firebase
     const auth = getAuth();
     const db = getFirestore();
 
-    const register = async () => {
-      try {
-        const result = await createUserWithEmailAndPassword(
-          auth,
-          email.value,
-          password.value
-        );
-        const user = result.user;
+    // Função de validação para garantir que os dados sejam válidos e não excedam os limites
+    const validateRegistration = () => {
+      error.value = "";
+      const fName = firstName.value.trim();
+      const lName = lastName.value.trim();
+      const e = email.value.trim();
+      const pwd = password.value.trim();
 
-        // Salvar informações do usuário no Firestore
-        await setDoc(
-          doc(db, "usuarios", user.uid),
-          {
-            userId: user.uid,
-            nome: `${firstName.value} ${lastName.value}`,
-            email: email.value,
-          },
-          { merge: true }
+      // Limites de caracteres
+      const maxNameLength = 50;
+      const maxEmailLength = 100;
+      const maxPasswordLength = 30;
+
+      // Regex simples para validar email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (!fName) {
+        error.value = "O campo 'Nome' é obrigatório.";
+        return false;
+      }
+      if (fName.length > maxNameLength) {
+        error.value = "Nome não pode exceder 50 caracteres.";
+        return false;
+      }
+      if (!lName) {
+        error.value = "O campo 'Sobrenome' é obrigatório.";
+        return false;
+      }
+      if (lName.length > maxNameLength) {
+        error.value = "Sobrenome não pode exceder 50 caracteres.";
+        return false;
+      }
+      if (!e) {
+        error.value = "O campo 'Email' é obrigatório.";
+        return false;
+      }
+      if (e.length > maxEmailLength) {
+        error.value = "Email não pode exceder 100 caracteres.";
+        return false;
+      }
+      if (!emailRegex.test(e)) {
+        error.value = "Por favor, insira um email válido.";
+        return false;
+      }
+      if (!pwd) {
+        error.value = "O campo 'Senha' é obrigatório.";
+        return false;
+      }
+      if (pwd.length < 6) {
+        error.value = "A senha deve ter no mínimo 6 caracteres.";
+        return false;
+      }
+      if (pwd.length > maxPasswordLength) {
+        error.value = "A senha não pode exceder 30 caracteres.";
+        return false;
+      }
+      return true;
+    };
+
+    // Função para cadastro via backend Spring Boot
+    const register = async () => {
+      if (!validateRegistration()) {
+        return;
+      }
+      try {
+        const payload = {
+          nome: `${firstName.value.trim()} ${lastName.value.trim()}`,
+          email: email.value.trim(),
+          senha: password.value.trim(),
+          role: "CLIENTE", // Define o role padrão
+        };
+
+        // Realiza a chamada para o endpoint de registro
+        await axios.post(
+          "http://localhost:8080/api/usuarios/registro",
+          payload
         );
 
         alert("Cadastro realizado com sucesso!");
-
-        // Desautenticar o usuário
-        await signOut(auth);
-
-        // Redirecionar para a página de login
         router.push("/login");
-      } catch (error) {
-        console.error("Erro ao fazer cadastro:", error.message);
-        alert("Erro ao fazer cadastro. Por favor, tente novamente.");
+      } catch (err) {
+        console.error("Erro ao fazer cadastro:", err.response || err);
+        error.value = "Erro ao fazer cadastro. Por favor, tente novamente.";
       }
     };
 
+    // Função para cadastro com Google via Firebase
     const registerWithGoogle = async () => {
       try {
         const provider = new GoogleAuthProvider();
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
 
-        // Salvar informações do usuário no Firestore
         await setDoc(
           doc(db, "usuarios", user.uid),
           {
@@ -118,15 +208,15 @@ export default {
         );
 
         alert("Cadastro realizado com Google com sucesso!");
-
-        // Desautenticar o usuário
         await signOut(auth);
-
-        // Redirecionar para a página de login
         router.push("/login");
-      } catch (error) {
-        console.error("Erro ao fazer cadastro com Google:", error.message);
-        alert("Erro ao fazer cadastro com Google. Por favor, tente novamente.");
+      } catch (err) {
+        console.error(
+          "Erro ao fazer cadastro com Google:",
+          err.response || err
+        );
+        error.value =
+          "Erro ao fazer cadastro com Google. Por favor, tente novamente.";
       }
     };
 
@@ -135,6 +225,7 @@ export default {
       lastName,
       email,
       password,
+      error,
       register,
       registerWithGoogle,
     };
@@ -166,14 +257,14 @@ header {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding-top: 100px; /* Ajuste para a altura do header */
-  padding-bottom: 100px; /* Ajuste para a altura do footer */
+  padding-top: 100px;
+  padding-bottom: 100px;
 }
 
 .auth-form {
-  width: 75%; /* Ajuste para inputs ocuparem 75% da tela */
-  max-width: 400px; /* Define um limite máximo de largura */
-  box-sizing: border-box; /* Inclui padding e border na largura total */
+  width: 75%;
+  max-width: 400px;
+  box-sizing: border-box;
 }
 
 footer {
@@ -187,7 +278,7 @@ footer {
 .login-icon {
   width: 120px;
   height: 120px;
-  margin-bottom: 0.5rem; /* Ajuste o espaço abaixo do ícone */
+  margin-bottom: 0.5rem;
 }
 
 .form-group {
@@ -205,8 +296,8 @@ input[type="text"],
 input[type="email"],
 input[type="password"],
 button {
-  width: 100%; /* Garante que os botões e inputs ocupem 100% da largura do form */
-  box-sizing: border-box; /* Inclui padding e border na largura total */
+  width: 100%;
+  box-sizing: border-box;
   padding: 0.75rem;
   border: 1px solid #ccc;
   border-radius: 5px;
@@ -214,26 +305,16 @@ button {
   margin-top: 1rem;
 }
 
-input[type="text"],
-input[type="email"],
-input[type="password"] {
-  margin-top: 0; /* Remove a margem superior dos inputs */
-}
-
-button {
-  cursor: pointer;
-  border: none; /* Remove a borda padrão */
-  transition: transform 0.2s ease; /* Adiciona transição para o efeito hover */
-}
-
 .btn-primary {
   background-color: #000;
   color: #fff;
-  border: 1px solid #000; /* Adiciona borda preta */
+  border: 1px solid #000;
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
 
 .btn-primary:hover {
-  background-color: #333; /* Efeito hover */
+  background-color: #333;
 }
 
 .btn-secondary {
@@ -241,23 +322,26 @@ button {
   align-items: center;
   justify-content: center;
   background-color: #ffffff;
-  color: #000; /* Define a cor do texto para preto */
-  border: 1px solid #ffffff;
+  color: #000;
+  border: 1px solid #ccc;
+  margin-top: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
 
 .btn-secondary:hover {
   background-color: #fcfcfc;
-  transform: scale(1.05); /* Aumenta o tamanho do botão e do conteúdo em 5% */
+  transform: scale(1.05);
 }
 
 .google-icon {
   width: 20px;
   height: 20px;
-  margin-left: 0.5rem; /* Adiciona espaço entre o texto e o ícone */
+  margin-left: 0.5rem;
 }
 
 .register-link {
-  margin-top: 2rem; /* Aumentado o espaço entre o form e o footer */
+  margin-top: 2rem;
   color: #007bff;
   text-decoration: none;
 }
@@ -266,55 +350,51 @@ button {
   text-decoration: underline;
 }
 
+.error-message {
+  color: red;
+  margin-top: 1rem;
+}
+
 /* Estilos responsivos */
 @media (max-width: 768px) {
   .auth-content {
-    padding-top: 80px; /* Ajuste para a altura do header */
-    padding-bottom: 80px; /* Ajuste para a altura do footer */
+    padding-top: 80px;
+    padding-bottom: 80px;
   }
-
   .auth-form {
-    width: 75%; /* Inputs continuam ocupando 75% da tela */
-    max-width: 300px; /* Reduzir o limite máximo de largura */
+    max-width: 300px;
   }
-
   .login-icon {
-    width: 100px; /* Reduzir tamanho do ícone */
+    width: 100px;
     height: 100px;
   }
-
   input[type="text"],
   input[type="email"],
   input[type="password"],
   button {
-    padding: 0.5rem; /* Reduzir o padding */
-    font-size: 0.9rem; /* Reduzir o tamanho da fonte */
+    padding: 0.5rem;
+    font-size: 0.9rem;
   }
 }
 
 @media (max-width: 480px) {
   .auth-content {
-    padding-top: 60px; /* Ajuste para a altura do header */
-    padding-bottom: 60px; /* Ajuste para a altura do footer */
+    padding-top: 60px;
+    padding-bottom: 60px;
   }
-
   .auth-form {
-    width: 75%; /* Inputs continuam ocupando 75% da tela */
-    max-width: 100%; /* Ocupa toda a largura disponível */
-    padding: 0 1rem; /* Adicionar padding lateral */
+    max-width: 100%;
+    padding: 0 1rem;
   }
-
   .login-icon {
-    width: 80px; /* Reduzir ainda mais o tamanho do ícone */
+    width: 80px;
     height: 80px;
   }
-
   input[type="text"],
   input[type="email"],
   input[type="password"],
   button {
-    padding: 0.5rem; /* Manter o padding reduzido */
-    /* Reduzir ainda mais o tamanho da fonte */
+    padding: 0.5rem;
   }
 }
 </style>

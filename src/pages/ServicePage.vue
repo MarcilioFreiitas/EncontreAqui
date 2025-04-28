@@ -1,13 +1,14 @@
 <template>
   <div>
-    <Header :showSearch="true" />
+    <!-- O Header agora emite o evento "searched", que é capturado via handleSearch -->
+    <Header :showSearch="true" @searched="handleSearch" />
     <div class="categories">
       <div v-if="isLoading" class="loading">
         <i class="fa fa-spinner fa-spin"></i> Carregando serviços...
       </div>
       <div v-else>
         <div
-          v-for="category in categories"
+          v-for="category in filteredCategories"
           :key="category.nome"
           class="category"
         >
@@ -27,19 +28,28 @@
               class="item"
               @click="viewItemDetail(item.id, 'service')"
             >
-              <img :src="item.imagem" alt="Photo" class="item-photo" />
-              <p>{{ item.nome }}</p>
-              <p class="rating">
-                <span v-for="star in 5" :key="star" class="star">
-                  <i
-                    class="fa"
-                    :class="star <= item.rating ? 'fa-star' : 'fa-star-o'"
-                  ></i>
-                </span>
-                ({{ item.rating.toFixed(1) }})
+              <!-- Exibe a primeira imagem, se houver; caso contrário, utiliza um placeholder -->
+              <img
+                :src="
+                  item.fotos && item.fotos.length
+                    ? item.fotos[0]
+                    : 'https://via.placeholder.com/150'
+                "
+                alt="Photo"
+                class="item-photo"
+              />
+              <!-- Exibe o título -->
+              <p class="item-title">{{ item.titulo }}</p>
+              <!-- Exibe o profissional responsável -->
+              <p class="item-profissional">
+                Profissional: {{ item.profissionalResponsavel }}
               </p>
             </div>
           </div>
+        </div>
+        <!-- Caso nenhum item seja encontrado -->
+        <div v-if="filteredCategories.length === 0" class="no-results">
+          Nenhum serviço encontrado.
         </div>
       </div>
     </div>
@@ -51,9 +61,7 @@
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
 import { useRouter } from "vue-router";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "../firebaseConfig";
-import "@fortawesome/fontawesome-free/css/all.min.css"; // Adicione esta linha
+import axiosInstance from "@/services/axios.js";
 
 export default {
   name: "ServicePage",
@@ -61,78 +69,97 @@ export default {
     Header,
     Footer,
   },
-  setup() {
-    const router = useRouter();
-    const viewAllItems = (categoryName, type) => {
-      router.push({
-        name: "CategoryPage",
-        params: { categoryId: categoryName, categoryType: type },
-      });
-    };
-
-    const viewItemDetail = (itemId, type) => {
-      router.push({
-        name: "ItemDetailPage",
-        params: { itemId: itemId, type: type },
-      });
-    };
-
-    return { viewAllItems, viewItemDetail };
-  },
   data() {
     return {
       categories: [],
-      isLoading: true, // Estado de carregamento
+      isLoading: true,
+      localSearch: "", // Valor de pesquisa recebido do Header
     };
   },
-  async created() {
-    const querySnapshot = await getDocs(collection(db, "servicos"));
-    const servicos = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-      rating: 0, // Inicializa a avaliação com zero
-    }));
-
-    // Buscar avaliações e calcular a média
-    for (let servico of servicos) {
-      const q = query(
-        collection(db, "avaliacoes"), // Nome correto da coleção
-        where("itemId", "==", servico.id)
-      );
-      const querySnapshot = await getDocs(q);
-      const ratings = querySnapshot.docs.map((doc) => doc.data().avaliacao);
-
-      console.log(`Ratings for ${servico.nome}:`, ratings);
-
-      const averageRating =
-        ratings.reduce((acc, rating) => acc + rating, 0) / ratings.length || 0;
-
-      console.log(`Average rating for ${servico.nome}:`, averageRating);
-
-      servico.rating = averageRating;
-    }
-
-    const categoriesMap = servicos.reduce((acc, servico) => {
-      const category = servico.categoria;
-      if (!acc[category]) {
-        acc[category] = [];
+  computed: {
+    // Converte o valor de pesquisa para minúsculas e remove espaços extras
+    searchText() {
+      return this.localSearch.trim().toLowerCase();
+    },
+    // Filtra os grupos de serviços com base na pesquisa parcial
+    filteredCategories() {
+      if (!this.searchText) {
+        return this.categories;
       }
-      acc[category].push(servico);
-      return acc;
-    }, {});
-
-    this.categories = Object.keys(categoriesMap).map((key) => ({
-      nome: key,
-      items: categoriesMap[key],
-    }));
-
-    this.isLoading = false; // Atualiza o estado de carregamento
+      return this.categories
+        .map((group) => {
+          // Se o nome da categoria contiver o texto pesquisado, retorna o grupo inteiro
+          if (group.nome.toLowerCase().includes(this.searchText)) {
+            return group;
+          }
+          // Caso contrário, filtra os itens cujo título contenha o texto pesquisado
+          const filteredItems = group.items.filter((item) =>
+            item.titulo.toLowerCase().includes(this.searchText)
+          );
+          return { nome: group.nome, items: filteredItems };
+        })
+        .filter((group) => group.items && group.items.length > 0);
+    },
+  },
+  methods: {
+    handleSearch(value) {
+      // Atualiza o valor local com o texto pesquisado emitido pelo Header
+      this.localSearch = value;
+    },
+    viewAllItems(categoryName, categoryType) {
+      this.$router.push({
+        name: "CategoryPage",
+        params: { categoryId: categoryName, categoryType: categoryType },
+      });
+    },
+    // Redireciona para a tela de detalhes específica para serviço
+    viewItemDetail(itemId, type) {
+      if (type === "service") {
+        this.$router.push({
+          name: "DetalhesServicos",
+          params: { id: itemId },
+        });
+      } else {
+        this.$router.push({
+          name: "ItemDetailPage",
+          params: { itemId: itemId, type: type },
+        });
+      }
+    },
+  },
+  async created() {
+    try {
+      // Busca todos os serviços na API
+      const response = await axiosInstance.get("/servicos");
+      // Mapear os serviços e garantir os campos necessários; define default para horário se necessário.
+      const servicos = response.data.map((servico) => ({
+        ...servico,
+        horarioFuncionamento: servico.horarioFuncionamento || "Não informado",
+      }));
+      // Agrupar os serviços por categoria
+      const categoriesMap = servicos.reduce((acc, servico) => {
+        const category = servico.categoria;
+        if (!acc[category]) {
+          acc[category] = [];
+        }
+        acc[category].push(servico);
+        return acc;
+      }, {});
+      this.categories = Object.keys(categoriesMap).map((key) => ({
+        nome: key,
+        items: categoriesMap[key],
+      }));
+    } catch (error) {
+      console.error("Erro ao buscar serviços:", error.response || error);
+    } finally {
+      this.isLoading = false;
+    }
   },
 };
 </script>
 
 <style scoped>
-.categoris {
+.categories {
   display: flex;
   flex-direction: column;
   margin: 2rem;
@@ -164,38 +191,42 @@ export default {
 
 .items {
   display: flex;
-  flex-direction: row; /* Organizar itens em linha */
-  overflow-x: auto; /* Adicionar rolagem horizontal se necessário */
-  -webkit-overflow-scrolling: touch; /* Suavizar a rolagem em dispositivos móveis */
+  flex-direction: row;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .item {
   width: 150px;
-  flex-shrink: 0; /* Evitar que os itens encolham */
+  flex-shrink: 0;
   margin: 1rem;
   text-align: center;
   cursor: pointer;
 }
 
 .item-photo {
-  width: 100%;
-  height: auto;
+  width: 150px; /* Fixed width */
+  height: 150px; /* Fixed height */
+  object-fit: cover; /* Ensures image covers the container */
   border-radius: 8px;
 }
 
-.rating {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 0.5rem;
+.item-title {
+  margin: 0.5rem 0 0.25rem;
+  font-weight: bold;
+  font-size: 1rem;
 }
 
-.star {
-  color: #ffb400; /* Cor das estrelas */
-  margin-right: 0.1rem;
+.item-profissional {
+  font-size: 0.9rem;
+  color: #555;
+  margin: 0.25rem 0 0;
 }
 
-.star i {
-  font-size: 1rem; /* Tamanho das estrelas */
+.no-results {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #888;
+  margin-top: 2rem;
 }
 </style>

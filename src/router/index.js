@@ -10,13 +10,22 @@ import RegisterPage from "@/pages/RegisterPage.vue";
 import SobrePage from "@/pages/SobrePage.vue";
 import SearchResults from "@/pages/SearchResults.vue";
 import EncontrePage from "@/pages/EncontrePage.vue";
-import PostDetailPage from "@/pages/PostDetailPage.vue";
-import VendasPage from "@/pages/VendasPage.vue";
 
-import ViagemPage from "../pages/ViagemPage.vue";
-import ViagemDetailPage from "@/pages/ViagemDetailPage.vue";
-import VendasDatailPage from "../pages/VendasDetailPage.vue";
-import VendasDetailPage from "../pages/VendasDetailPage.vue";
+import Profile from "../pages/Profile.vue";
+import CadastroComercio from "../pages/CadastroComercio.vue";
+import CadastroServico from "../pages/CadastroServico.vue";
+import CadastroAluguel from "../pages/CadastroAluguel.vue";
+import MeusAnuncios from "../pages/MeusAnuncios.vue";
+
+// Novas telas de edição adicionadas abaixo:
+import EditarComercio from "@/pages/EditarComercio.vue";
+import EditarServico from "@/pages/EditarServico.vue";
+import EditarAluguel from "@/pages/EditarAluguel.vue";
+
+// ADICIONANDO OS NOVOS COMPONENTES DE DETALHES:
+import DetalhesComercio from "@/pages/DetalhesComercio.vue";
+import DetalhesServicos from "@/pages/DetalhesServicos.vue";
+import DetalhesAluguel from "@/pages/DetalhesAluguel.vue";
 
 const routes = [
   { path: "/", component: HomePage },
@@ -38,18 +47,45 @@ const routes = [
   { path: "/sobre", component: SobrePage },
   { path: "/search", name: "SearchResults", component: SearchResults },
   { path: "/encontre", component: EncontrePage },
-  { path: "/post/:id", name: "PostDetailPage", component: PostDetailPage },
-  { path: "/vendas", component: VendasPage },
+
+  { path: "/profile", component: Profile },
+  { path: "/cadastrocomercio", component: CadastroComercio },
+  { path: "/cadastroservico", component: CadastroServico },
+  { path: "/cadastroaluguel", component: CadastroAluguel },
+  { path: "/meusanuncios", component: MeusAnuncios },
+
+  // Rotas de edição adicionadas:
   {
-    path: "/vendas/:id",
-    name: "VendasDetailPage",
-    component: VendasDetailPage,
+    path: "/editarcomercio/:id",
+    name: "EditarComercio",
+    component: EditarComercio,
   },
-  { path: "/viagem", component: ViagemPage },
   {
-    path: "/viagem/:id",
-    name: "ViagemDetailPage",
-    component: ViagemDetailPage,
+    path: "/editarservico/:id",
+    name: "EditarServico",
+    component: EditarServico,
+  },
+  {
+    path: "/editaraluguel/:id",
+    name: "EditarAluguel",
+    component: EditarAluguel,
+  },
+
+  // Novas rotas para Detalhes
+  {
+    path: "/detalhescomercio/:id",
+    name: "DetalhesComercio",
+    component: DetalhesComercio,
+  },
+  {
+    path: "/detalhesservicos/:id",
+    name: "DetalhesServicos",
+    component: DetalhesServicos,
+  },
+  {
+    path: "/detalhesaluguel/:id",
+    name: "DetalhesAluguel",
+    component: DetalhesAluguel,
   },
 ];
 
