@@ -1,7 +1,22 @@
 <template>
   <div>
-    <!-- A barra de pesquisa vem do Header e emite o evento "searched" -->
+    <!-- O Header emite o evento "searched", que é capturado pelo método handleSearch -->
     <Header :showSearch="true" @searched="handleSearch" />
+
+    <!-- Filtro de categoria -->
+    <div class="filter-container">
+      <label for="categoryFilter">Filtrar por Categoria:</label>
+      <select id="categoryFilter" v-model="selectedCategory">
+        <option value="">Todos</option>
+        <option
+          v-for="category in allCategoryNames"
+          :key="category"
+          :value="category"
+        >
+          {{ category }}
+        </option>
+      </select>
+    </div>
 
     <div class="categories">
       <div v-if="isLoading" class="loading">
@@ -45,10 +60,20 @@
               <p class="item-horario">
                 Horário: {{ item.horarioFuncionamento }}
               </p>
+              <!-- Exibe as estrelas de avaliação -->
+              <div class="star-display">
+                <span
+                  v-for="star in 5"
+                  :key="star"
+                  :class="{ filled: star <= item.mediaAvaliacoes }"
+                >
+                  ★
+                </span>
+              </div>
             </div>
           </div>
         </div>
-        <!-- Messagem caso nenhum item seja encontrado -->
+        <!-- Mensagem caso nenhuma categoria seja encontrada -->
         <div v-if="filteredCategories.length === 0" class="no-results">
           Nenhum comércio encontrado.
         </div>
@@ -66,46 +91,70 @@ import axiosInstance from "@/services/axios.js";
 
 export default {
   name: "CommercePage",
-  components: {
-    Header,
-    Footer,
-  },
+  components: { Header, Footer },
   data() {
     return {
       categories: [],
       isLoading: true,
-      localSearch: "", // Valor de pesquisa recebido do Header via evento "searched"
+      localSearch: "",
+      selectedCategory: "",
     };
   },
   computed: {
-    // Computed que retorna o texto de pesquisa convertido para minúsculas
-    searchText() {
-      return this.localSearch.trim().toLowerCase();
+    // Retorna todos os nomes de categorias (pode conter duplicatas, mas já que o agrupamento é feito, os nomes são únicos)
+    allCategoryNames() {
+      // Se houver categorias, mapeia seus nomes
+      return this.categories.map((cat) => cat.nome);
     },
-    // Filtra os grupos com base no nome da categoria ou no título do item (partial match)
+    // Filtra as categorias, se uma categoria estiver selecionada
     filteredCategories() {
-      if (!this.searchText) {
+      if (!this.selectedCategory) {
         return this.categories;
       }
-      return this.categories
-        .map((group) => {
-          // Se o nome da categoria contiver a string pesquisada, retorna o grupo inteiro
-          if (group.nome.toLowerCase().includes(this.searchText)) {
-            return group;
-          }
-          // Caso contrário, filtra somente os itens cujo título contenha o texto pesquisado
-          const filteredItems = group.items.filter((item) =>
-            item.titulo.toLowerCase().includes(this.searchText)
-          );
-          return { nome: group.nome, items: filteredItems };
-        })
-        .filter((group) => group.items && group.items.length > 0);
+      return this.categories.filter(
+        (cat) => cat.nome === this.selectedCategory
+      );
     },
   },
   methods: {
-    // Atualiza a propriedade localSearch via o evento emitido pelo Header
-    handleSearch(value) {
-      this.localSearch = value;
+    async handleSearch(value) {
+      let searchQuery = "";
+      if (typeof value === "object" && value.query) {
+        searchQuery = value.query;
+      } else if (typeof value === "string") {
+        searchQuery = value;
+      } else {
+        searchQuery = "";
+      }
+      if (!searchQuery.trim()) return;
+      try {
+        this.isLoading = true;
+        const response = await axiosInstance.get(
+          `/comercios/search?q=${encodeURIComponent(searchQuery)}`
+        );
+        const comercios = response.data.map((comercio) => ({
+          ...comercio,
+          mediaAvaliacoes: comercio.mediaAvaliacoes || 0,
+          horarioFuncionamento:
+            comercio.horarioFuncionamento || "Não informado",
+        }));
+        const categoriesMap = comercios.reduce((acc, comercio) => {
+          const category = comercio.categoria;
+          if (!acc[category]) {
+            acc[category] = [];
+          }
+          acc[category].push(comercio);
+          return acc;
+        }, {});
+        this.categories = Object.keys(categoriesMap).map((key) => ({
+          nome: key,
+          items: categoriesMap[key],
+        }));
+      } catch (error) {
+        console.error("Erro ao buscar comércios:", error.response || error);
+      } finally {
+        this.isLoading = false;
+      }
     },
     viewAllItems(categoryName, categoryType) {
       this.$router.push({
@@ -129,14 +178,11 @@ export default {
   },
   async created() {
     try {
-      // Busca todos os comércios da API
       const response = await axiosInstance.get("/comercios");
       const comercios = response.data.map((comercio) => ({
         ...comercio,
-        rating: comercio.rating || 0,
+        mediaAvaliacoes: comercio.mediaAvaliacoes || 0,
       }));
-
-      // Agrupa os comércios por categoria
       const categoriesMap = comercios.reduce((acc, comercio) => {
         const category = comercio.categoria;
         if (!acc[category]) {
@@ -145,7 +191,6 @@ export default {
         acc[category].push(comercio);
         return acc;
       }, {});
-
       this.categories = Object.keys(categoriesMap).map((key) => ({
         nome: key,
         items: categoriesMap[key],
@@ -156,37 +201,38 @@ export default {
       this.isLoading = false;
     }
   },
-  watch: {
-    // Se desejar, é possível colocar ações adicionais ao mudar a query (não é obrigatório)
-    "$route.query.q"(newVal) {
-      // Essa lógica pode ser usada se você quiser sincronizar com a query string,
-      // mas, neste exemplo, usamos o evento "searched" para alimentar o filtro.
-    },
-  },
 };
 </script>
 
 <style scoped>
-/* (Opcional) Estilos para container de filtro, caso queira exibir algo extra */
-.filter-container {
-  margin: 1rem 2rem;
-  display: flex;
-  justify-content: center;
-}
-
-.filter-input {
-  width: 100%;
-  max-width: 500px;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-/* Layout das Categorias e Itens */
 .categories {
   display: flex;
   flex-direction: column;
   margin: 2rem;
+}
+
+/* Filtro de categoria */
+.filter-container {
+  max-width: 800px;
+  margin: 1rem auto;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.filter-container label {
+  font-weight: 600;
+  color: #333;
+}
+.filter-container select {
+  flex-grow: 1;
+  padding: 0.4rem;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 }
 
 .loading {
@@ -217,6 +263,7 @@ export default {
   display: flex;
   flex-direction: row;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .item {
@@ -227,9 +274,9 @@ export default {
 }
 
 .item-photo {
-  width: 150px; /* Fixed width */
-  height: 150px; /* Fixed height */
-  object-fit: cover; /* Ensures image covers the container */
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
   border-radius: 8px;
 }
 
@@ -245,10 +292,38 @@ export default {
   margin: 0;
 }
 
+.star-display {
+  margin-top: 0.3rem;
+}
+
+.star-display span {
+  font-size: 1.2rem;
+  color: #ccc;
+  margin-right: 2px;
+}
+
+.star-display span.filled {
+  color: gold;
+}
+
 .no-results {
   text-align: center;
   font-size: 1.2rem;
   color: #888;
   margin-top: 2rem;
+}
+
+@media (max-width: 600px) {
+  .categories {
+    margin: 1rem;
+  }
+  .item {
+    width: 130px;
+    margin: 0.5rem;
+  }
+  .item-photo {
+    width: 130px;
+    height: 130px;
+  }
 }
 </style>

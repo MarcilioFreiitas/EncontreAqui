@@ -1,7 +1,19 @@
 <template>
   <div>
-    <!-- O Header agora emite o evento "searched", que é capturado via handleSearch -->
+    <!-- O Header emite o evento "searched", que é capturado pelo método handleSearch -->
     <Header :showSearch="true" @searched="handleSearch" />
+
+    <!-- Bloco de filtro de categoria -->
+    <div class="filter-container">
+      <label for="categoryFilter">Filtrar por Categoria:</label>
+      <select id="categoryFilter" v-model="selectedCategory">
+        <option value="">Todos</option>
+        <option v-for="cat in allCategoryNames" :key="cat" :value="cat">
+          {{ cat }}
+        </option>
+      </select>
+    </div>
+
     <div class="categories">
       <div v-if="isLoading" class="loading">
         <i class="fa fa-spinner fa-spin"></i> Carregando serviços...
@@ -28,7 +40,7 @@
               class="item"
               @click="viewItemDetail(item.id, 'service')"
             >
-              <!-- Exibe a primeira imagem, se houver; caso contrário, utiliza um placeholder -->
+              <!-- Exibe a primeira imagem; se não houver, utiliza um placeholder -->
               <img
                 :src="
                   item.fotos && item.fotos.length
@@ -44,10 +56,19 @@
               <p class="item-profissional">
                 Profissional: {{ item.profissionalResponsavel }}
               </p>
+              <!-- Exibe as estrelas baseadas na média das avaliações -->
+              <div class="star-display">
+                <span
+                  v-for="star in 5"
+                  :key="star"
+                  :class="{ filled: star <= item.mediaAvaliacoes }"
+                >
+                  ★
+                </span>
+              </div>
             </div>
           </div>
         </div>
-        <!-- Caso nenhum item seja encontrado -->
         <div v-if="filteredCategories.length === 0" class="no-results">
           Nenhum serviço encontrado.
         </div>
@@ -73,38 +94,62 @@ export default {
     return {
       categories: [],
       isLoading: true,
-      localSearch: "", // Valor de pesquisa recebido do Header
+      localSearch: "", // Para armazenar o termo pesquisado, se necessário
+      selectedCategory: "", // Categoria selecionada no filtro
     };
   },
   computed: {
-    // Converte o valor de pesquisa para minúsculas e remove espaços extras
-    searchText() {
-      return this.localSearch.trim().toLowerCase();
+    // Extrai todos os nomes de categorias, conforme agrupamento carregado
+    allCategoryNames() {
+      return this.categories.map((cat) => cat.nome);
     },
-    // Filtra os grupos de serviços com base na pesquisa parcial
+    // Filtra as categorias com base na categoria selecionada; se nenhuma estiver selecionada, retorna todas
     filteredCategories() {
-      if (!this.searchText) {
-        return this.categories;
-      }
-      return this.categories
-        .map((group) => {
-          // Se o nome da categoria contiver o texto pesquisado, retorna o grupo inteiro
-          if (group.nome.toLowerCase().includes(this.searchText)) {
-            return group;
-          }
-          // Caso contrário, filtra os itens cujo título contenha o texto pesquisado
-          const filteredItems = group.items.filter((item) =>
-            item.titulo.toLowerCase().includes(this.searchText)
-          );
-          return { nome: group.nome, items: filteredItems };
-        })
-        .filter((group) => group.items && group.items.length > 0);
+      if (!this.selectedCategory) return this.categories;
+      return this.categories.filter(
+        (cat) => cat.nome === this.selectedCategory
+      );
     },
   },
   methods: {
-    handleSearch(value) {
-      // Atualiza o valor local com o texto pesquisado emitido pelo Header
-      this.localSearch = value;
+    async handleSearch(value) {
+      let searchQuery = "";
+      if (typeof value === "object" && value.query) {
+        searchQuery = value.query;
+      } else if (typeof value === "string") {
+        searchQuery = value;
+      } else {
+        searchQuery = "";
+      }
+      if (!searchQuery.trim()) return;
+      try {
+        this.isLoading = true;
+        const response = await axiosInstance.get(
+          `/servicos/search?q=${encodeURIComponent(searchQuery)}`
+        );
+        const servicos = response.data.map((servico) => ({
+          ...servico,
+          horarioFuncionamento: servico.horarioFuncionamento || "Não informado",
+          mediaAvaliacoes:
+            servico.mediaAvaliacoes != null ? servico.mediaAvaliacoes : 0,
+        }));
+        const categoriesMap = servicos.reduce((acc, servico) => {
+          const category = servico.categoria;
+          if (!acc[category]) {
+            acc[category] = [];
+          }
+          acc[category].push(servico);
+          return acc;
+        }, {});
+        this.categories = Object.keys(categoriesMap).map((key) => ({
+          nome: key,
+          items: categoriesMap[key],
+        }));
+      } catch (error) {
+        console.error("Erro ao buscar serviços:", error.response || error);
+      } finally {
+        this.isLoading = false;
+      }
     },
     viewAllItems(categoryName, categoryType) {
       this.$router.push({
@@ -112,7 +157,6 @@ export default {
         params: { categoryId: categoryName, categoryType: categoryType },
       });
     },
-    // Redireciona para a tela de detalhes específica para serviço
     viewItemDetail(itemId, type) {
       if (type === "service") {
         this.$router.push({
@@ -129,14 +173,13 @@ export default {
   },
   async created() {
     try {
-      // Busca todos os serviços na API
       const response = await axiosInstance.get("/servicos");
-      // Mapear os serviços e garantir os campos necessários; define default para horário se necessário.
       const servicos = response.data.map((servico) => ({
         ...servico,
         horarioFuncionamento: servico.horarioFuncionamento || "Não informado",
+        mediaAvaliacoes:
+          servico.mediaAvaliacoes != null ? servico.mediaAvaliacoes : 0,
       }));
-      // Agrupar os serviços por categoria
       const categoriesMap = servicos.reduce((acc, servico) => {
         const category = servico.categoria;
         if (!acc[category]) {
@@ -163,6 +206,30 @@ export default {
   display: flex;
   flex-direction: column;
   margin: 2rem;
+}
+
+/* Filtro de categoria */
+.filter-container {
+  max-width: 800px;
+  margin: 1rem auto;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.filter-container label {
+  font-weight: 600;
+  color: #333;
+}
+.filter-container select {
+  flex-grow: 1;
+  padding: 0.4rem;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 }
 
 .loading {
@@ -205,9 +272,9 @@ export default {
 }
 
 .item-photo {
-  width: 150px; /* Fixed width */
-  height: 150px; /* Fixed height */
-  object-fit: cover; /* Ensures image covers the container */
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
   border-radius: 8px;
 }
 
@@ -223,10 +290,38 @@ export default {
   margin: 0.25rem 0 0;
 }
 
+.star-display {
+  margin-top: 0.3rem;
+}
+
+.star-display span {
+  font-size: 1.2rem;
+  color: #ccc;
+  margin-right: 2px;
+}
+
+.star-display span.filled {
+  color: gold;
+}
+
 .no-results {
   text-align: center;
   font-size: 1.2rem;
   color: #888;
   margin-top: 2rem;
+}
+
+@media (max-width: 600px) {
+  .categories {
+    margin: 1rem;
+  }
+  .item {
+    width: 130px;
+    margin: 0.5rem;
+  }
+  .item-photo {
+    width: 130px;
+    height: 130px;
+  }
 }
 </style>

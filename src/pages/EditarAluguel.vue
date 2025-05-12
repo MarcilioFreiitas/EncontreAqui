@@ -19,6 +19,15 @@
             ></textarea>
           </div>
           <div class="form-group">
+            <label for="categoria">Categoria:</label>
+            <input
+              type="text"
+              id="categoria"
+              v-model="aluguel.categoria"
+              required
+            />
+          </div>
+          <div class="form-group">
             <label for="enderecoCompleto">Endereço Completo:</label>
             <input
               type="text"
@@ -198,10 +207,12 @@ export default {
   setup() {
     const router = useRouter();
     const route = useRoute();
+    // Inicialize o objeto "aluguel" com todos os campos obrigatórios conforme a entidade:
     const aluguel = ref({
       id: null,
       titulo: "",
       descricao: "",
+      categoria: "", // Campo adicionado
       enderecoCompleto: "",
       valorAluguel: 0,
       numeroDeBanheiros: 0,
@@ -263,6 +274,7 @@ export default {
         const aluguelData = {
           titulo: aluguel.value.titulo,
           descricao: aluguel.value.descricao,
+          categoria: aluguel.value.categoria, // Campo adicionado
           enderecoCompleto: aluguel.value.enderecoCompleto,
           valorAluguel: aluguel.value.valorAluguel,
           numeroDeBanheiros: aluguel.value.numeroDeBanheiros,
@@ -277,6 +289,8 @@ export default {
           usuarioId: aluguel.value.usuarioId,
         };
 
+        console.log("Aluguel Data:", JSON.stringify(aluguelData));
+
         const formData = new FormData();
         // Anexa o objeto "aluguel" como um Blob com content type JSON
         const aluguelBlob = new Blob([JSON.stringify(aluguelData)], {
@@ -284,7 +298,7 @@ export default {
         });
         formData.append("aluguel", aluguelBlob);
 
-        // Anexa as fotos existentes (aquelas que o usuário não removeu) como JSON string
+        // Anexa as fotos existentes
         formData.append("fotosExistentes", JSON.stringify(aluguel.value.fotos));
 
         // Anexa os novos arquivos, se houver
@@ -292,7 +306,7 @@ export default {
           formData.append("novasFotos", file);
         });
 
-        // Usa a instância Axios para enviar a requisição PUT sem sobrescrever o header Content-Type
+        // Envia a requisição PUT (não defina Content-Type manualmente)
         await axiosInstance.put(`/alugueis/${aluguelId}`, formData);
         alert("Aluguel atualizado com sucesso!");
         router.push("/meusanuncios");

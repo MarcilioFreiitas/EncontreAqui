@@ -44,7 +44,7 @@
 
 <script>
 import { ref, onMounted, onUnmounted } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { useUserStore } from "@/stores/user";
 
 export default {
@@ -57,6 +57,7 @@ export default {
   },
   setup(props, { emit }) {
     const router = useRouter();
+    const route = useRoute();
     const userStore = useUserStore();
     const isSticky = ref(false);
     const searchQuery = ref("");
@@ -84,10 +85,29 @@ export default {
 
     const search = () => {
       if (!searchQuery.value.trim()) return;
-      // Emite o evento "searched" com o valor da pesquisa
-      emit("searched", searchQuery.value.toLowerCase());
-      // Se desejar manter o redirecionamento para a página de resultados, pode descomentar a linha abaixo:
-      // router.push({ name: "SearchResults", query: { q: searchQuery.value.toLowerCase() } });
+
+      // Determina o contexto a partir do caminho da rota atual
+      const currentPath = route.path;
+      let searchContext = "";
+      if (currentPath.startsWith("/comercios")) {
+        searchContext = "comercios";
+      } else if (currentPath.startsWith("/servicos")) {
+        searchContext = "servicos";
+      } else if (currentPath.startsWith("/aluguels")) {
+        searchContext = "aluguels";
+      } else {
+        // Se não estiver em nenhuma destas páginas específicas, pode ser global ou um contexto padrão
+        searchContext = "global";
+      }
+
+      // Emite o evento "searched" com o termo pesquisado e o contexto
+      emit("searched", {
+        query: searchQuery.value.toLowerCase(),
+        context: searchContext,
+      });
+
+      // Opcional: redireciona para uma página de resultados com query parameters
+      // router.push({ name: "SearchResults", query: { q: searchQuery.value.toLowerCase(), type: searchContext } });
     };
 
     return {

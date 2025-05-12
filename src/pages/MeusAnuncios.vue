@@ -19,7 +19,7 @@
             <h3>{{ comercio.titulo }}</h3>
             <p>{{ comercio.descricao }}</p>
             <p><strong>Endereço:</strong> {{ comercio.enderecoCompleto }}</p>
-            <!-- Exibe imagens do comércio -->
+            <!-- Exibe fotos se houver -->
             <div class="images" v-if="comercio.fotos && comercio.fotos.length">
               <img
                 v-for="(foto, index) in comercio.fotos"
@@ -32,6 +32,67 @@
             <div class="actions">
               <button @click="editComercio(comercio.id)">Editar</button>
               <button @click="deleteComercio(comercio.id)">Excluir</button>
+            </div>
+            <!-- Botão para alternar a exibição das avaliações -->
+            <button
+              class="coment-btn"
+              @click="toggleAvaliacoes(comercio, 'comercio')"
+            >
+              {{
+                getAvaliacoesVisibility(comercio.id, "comercio")
+                  ? "Esconder Avaliações"
+                  : "Ver Avaliações"
+              }}
+            </button>
+            <!-- Seção de avaliações para o comércio -->
+            <div
+              v-if="getAvaliacoesVisibility(comercio.id, 'comercio')"
+              class="comentarios"
+            >
+              <div
+                v-if="
+                  !avaliacoesMap[getKey(comercio.id, 'comercio')].list.length
+                "
+              >
+                <p>Sem avaliações.</p>
+              </div>
+              <div v-else>
+                <div
+                  v-for="avaliacao in avaliacoesMap[
+                    getKey(comercio.id, 'comercio')
+                  ].list"
+                  :key="avaliacao.id"
+                  class="comentario"
+                >
+                  <div class="star-rating">
+                    <span
+                      v-for="star in 5"
+                      :key="star"
+                      :class="{ filled: star <= avaliacao.nota }"
+                      >★</span
+                    >
+                  </div>
+                  <p><strong>Comentário:</strong> {{ avaliacao.comentario }}</p>
+                  <!-- Exibe a resposta se existir -->
+                  <p v-if="avaliacao.resposta" class="resposta-display">
+                    <strong>Resposta:</strong> {{ avaliacao.resposta }}
+                  </p>
+                  <!-- Se não houver resposta, permite reposta -->
+                  <div v-else class="resposta-area">
+                    <input
+                      type="text"
+                      v-model="avaliacao.newReply"
+                      placeholder="Digite sua resposta"
+                    />
+                    <button
+                      class="responder-btn"
+                      @click="sendReplyForAvaliacao(avaliacao, 'comercio')"
+                    >
+                      Responder
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -52,7 +113,6 @@
             <h3>{{ servico.titulo }}</h3>
             <p>{{ servico.descricao }}</p>
             <p><strong>Preço:</strong> R$ {{ servico.preco }}</p>
-            <!-- Exibe imagens do serviço -->
             <div class="images" v-if="servico.fotos && servico.fotos.length">
               <img
                 v-for="(foto, index) in servico.fotos"
@@ -65,6 +125,61 @@
             <div class="actions">
               <button @click="editServico(servico.id)">Editar</button>
               <button @click="deleteServico(servico.id)">Excluir</button>
+            </div>
+            <button
+              class="coment-btn"
+              @click="toggleAvaliacoes(servico, 'servico')"
+            >
+              {{
+                getAvaliacoesVisibility(servico.id, "servico")
+                  ? "Esconder Avaliações"
+                  : "Ver Avaliações"
+              }}
+            </button>
+            <div
+              v-if="getAvaliacoesVisibility(servico.id, 'servico')"
+              class="comentarios"
+            >
+              <div
+                v-if="!avaliacoesMap[getKey(servico.id, 'servico')].list.length"
+              >
+                <p>Sem avaliações.</p>
+              </div>
+              <div v-else>
+                <div
+                  v-for="avaliacao in avaliacoesMap[
+                    getKey(servico.id, 'servico')
+                  ].list"
+                  :key="avaliacao.id"
+                  class="comentario"
+                >
+                  <div class="star-rating">
+                    <span
+                      v-for="star in 5"
+                      :key="star"
+                      :class="{ filled: star <= avaliacao.nota }"
+                      >★</span
+                    >
+                  </div>
+                  <p><strong>Comentário:</strong> {{ avaliacao.comentario }}</p>
+                  <p v-if="avaliacao.resposta" class="resposta-display">
+                    <strong>Resposta:</strong> {{ avaliacao.resposta }}
+                  </p>
+                  <div v-else class="resposta-area">
+                    <input
+                      type="text"
+                      v-model="avaliacao.newReply"
+                      placeholder="Digite sua resposta"
+                    />
+                    <button
+                      class="responder-btn"
+                      @click="sendReplyForAvaliacao(avaliacao, 'servico')"
+                    >
+                      Responder
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -88,7 +203,6 @@
               <strong>Valor do Aluguel:</strong> R$ {{ aluguel.valorAluguel }}
             </p>
             <p><strong>Endereço:</strong> {{ aluguel.enderecoCompleto }}</p>
-            <!-- Exibe imagens do aluguel -->
             <div class="images" v-if="aluguel.fotos && aluguel.fotos.length">
               <img
                 v-for="(foto, index) in aluguel.fotos"
@@ -101,6 +215,61 @@
             <div class="actions">
               <button @click="editAluguel(aluguel.id)">Editar</button>
               <button @click="deleteAluguel(aluguel.id)">Excluir</button>
+            </div>
+            <button
+              class="coment-btn"
+              @click="toggleAvaliacoes(aluguel, 'aluguel')"
+            >
+              {{
+                getAvaliacoesVisibility(aluguel.id, "aluguel")
+                  ? "Esconder Avaliações"
+                  : "Ver Avaliações"
+              }}
+            </button>
+            <div
+              v-if="getAvaliacoesVisibility(aluguel.id, 'aluguel')"
+              class="comentarios"
+            >
+              <div
+                v-if="!avaliacoesMap[getKey(aluguel.id, 'aluguel')].list.length"
+              >
+                <p>Sem avaliações.</p>
+              </div>
+              <div v-else>
+                <div
+                  v-for="avaliacao in avaliacoesMap[
+                    getKey(aluguel.id, 'aluguel')
+                  ].list"
+                  :key="avaliacao.id"
+                  class="comentario"
+                >
+                  <div class="star-rating">
+                    <span
+                      v-for="star in 5"
+                      :key="star"
+                      :class="{ filled: star <= avaliacao.nota }"
+                      >★</span
+                    >
+                  </div>
+                  <p><strong>Comentário:</strong> {{ avaliacao.comentario }}</p>
+                  <p v-if="avaliacao.resposta" class="resposta-display">
+                    <strong>Resposta:</strong> {{ avaliacao.resposta }}
+                  </p>
+                  <div v-else class="resposta-area">
+                    <input
+                      type="text"
+                      v-model="avaliacao.newReply"
+                      placeholder="Digite sua resposta"
+                    />
+                    <button
+                      class="responder-btn"
+                      @click="sendReplyForAvaliacao(avaliacao, 'aluguel')"
+                    >
+                      Responder
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -125,15 +294,84 @@ export default {
     const router = useRouter();
     const userStore = useUserStore();
 
-    // Arrays que armazenarão os anúncios do usuário para cada categoria
+    // Arrays para armazenar os anúncios do usuário
     const comercios = ref([]);
     const servicos = ref([]);
     const aluguels = ref([]);
 
-    // Converte os valores para string para garantir a comparação
+    // Converter o ID do usuário para string para filtragem
     const userIdString = String(userStore.userId);
 
-    // Busca os dados de cada anúncio e filtra usando a comparação convertida
+    // Objeto para armazenar as avaliações de cada anúncio (chave: tipo-id)
+    const avaliacoesMap = ref({});
+
+    // Função auxiliar para gerar a chave única para cada anúncio
+    const getKey = (id, tipo) => `${tipo}-${id}`;
+
+    // Retorna a visibilidade das avaliações para um anúncio
+    const getAvaliacoesVisibility = (id, tipo) => {
+      const key = getKey(id, tipo);
+      return avaliacoesMap.value[key] ? avaliacoesMap.value[key].show : false;
+    };
+
+    // Alterna a exibição das avaliações e, se necessário, busca as avaliações
+    const toggleAvaliacoes = async (anuncio, tipo) => {
+      const key = getKey(anuncio.id, tipo);
+      if (!avaliacoesMap.value[key]) {
+        avaliacoesMap.value[key] = { show: false, list: [] };
+      }
+      avaliacoesMap.value[key].show = !avaliacoesMap.value[key].show;
+      if (
+        avaliacoesMap.value[key].show &&
+        avaliacoesMap.value[key].list.length === 0
+      ) {
+        await fetchAvaliacoes(anuncio.id, tipo, key);
+      }
+    };
+
+    // Busca as avaliações para um anúncio (GET /api/avaliacoes/item)
+    const fetchAvaliacoes = async (anuncioId, tipo, key) => {
+      try {
+        const response = await axiosInstance.get("/avaliacoes/item", {
+          params: { tipoItem: tipo, itemId: anuncioId },
+        });
+        // Para cada avaliação, adiciona a propriedade newReply para o input de resposta
+        const avaliacoes = response.data.map((avaliacao) => ({
+          ...avaliacao,
+          newReply: "",
+        }));
+        avaliacoesMap.value[key].list = avaliacoes;
+      } catch (error) {
+        console.error("Erro ao buscar avaliações:", error.response || error);
+      }
+    };
+
+    // Envia a resposta para uma avaliação (POST /api/avaliacoes/responder)
+    const sendReplyForAvaliacao = async (avaliacao, tipo) => {
+      try {
+        const payload = {
+          comentarioId: avaliacao.id,
+          resposta: avaliacao.newReply,
+        };
+        const response = await axiosInstance.post(
+          "/avaliacoes/responder",
+          payload
+        );
+        // Atualiza a avaliação na lista com os dados retornados
+        Object.keys(avaliacoesMap.value).forEach((key) => {
+          const list = avaliacoesMap.value[key].list;
+          const index = list.findIndex((item) => item.id === avaliacao.id);
+          if (index !== -1) {
+            list[index] = response.data;
+            list[index].newReply = "";
+          }
+        });
+      } catch (error) {
+        console.error("Erro ao responder avaliação:", error.response || error);
+      }
+    };
+
+    // Funções para buscar os anúncios do usuário
     const fetchComercios = async () => {
       try {
         const response = await axiosInstance.get("/comercios");
@@ -167,19 +405,18 @@ export default {
       }
     };
 
-    // Chama as funções de busca ao montar o componente
     onMounted(() => {
       fetchComercios();
       fetchServicos();
       fetchAluguels();
     });
 
-    // Métodos para navegação de edição redirecionam para a página de edição
+    // Métodos para navegação para as páginas de edição
     const editComercio = (id) => router.push(`/editarcomercio/${id}`);
     const editServico = (id) => router.push(`/editarservico/${id}`);
     const editAluguel = (id) => router.push(`/editaraluguel/${id}`);
 
-    // Métodos para exclusão com confirmação, atualizando as listas após a exclusão
+    // Métodos para exclusão com confirmação, atualizando a lista após exclusão
     const deleteComercio = async (id) => {
       if (confirm("Tem certeza que deseja excluir esse comércio?")) {
         try {
@@ -226,6 +463,11 @@ export default {
       deleteComercio,
       deleteServico,
       deleteAluguel,
+      toggleAvaliacoes,
+      getKey,
+      getAvaliacoesVisibility,
+      sendReplyForAvaliacao,
+      avaliacoesMap,
     };
   },
 };
@@ -309,5 +551,70 @@ export default {
 .actions button:nth-child(2) {
   background-color: #d9534f;
   color: #fff;
+}
+
+/* Estilos para avaliações e respostas */
+.coment-btn {
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background-color: #5bc0de;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.comentarios {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+}
+
+.comentarios .comentario {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.star-rating {
+  font-size: 1.2rem;
+  color: #ccc;
+  margin-bottom: 0.5rem;
+}
+
+.star-rating .filled {
+  color: gold;
+}
+
+.comentarios input[type="text"] {
+  width: calc(100% - 100px);
+  padding: 0.3rem;
+  margin-right: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.responder-btn {
+  padding: 0.3rem 0.6rem;
+  background-color: #5cb85c;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.no-results {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #888;
+  margin-top: 2rem;
+}
+
+/* Opcional: destaque para a resposta exibida */
+.resposta-display {
+  background-color: #f8f9fa;
+  padding: 0.3rem;
+  border-radius: 4px;
+  margin-top: 0.4rem;
 }
 </style>

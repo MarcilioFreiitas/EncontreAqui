@@ -17,6 +17,16 @@
               required
             ></textarea>
           </div>
+          <!-- Novo campo para Categoria -->
+          <div class="form-group">
+            <label for="categoria">Categoria:</label>
+            <input
+              type="text"
+              id="categoria"
+              v-model="comercio.categoria"
+              required
+            />
+          </div>
           <div class="form-group">
             <label for="enderecoCompleto">Endereço Completo:</label>
             <input
@@ -136,49 +146,25 @@ export default {
   setup() {
     const router = useRouter();
     const route = useRoute();
-
-    // commerce object com dados retornados do backend
     const comercio = ref({
       id: null,
       titulo: "",
       descricao: "",
+      categoria: "", // Campo adicionado
       enderecoCompleto: "",
       horarioFuncionamento: "",
       telefone: "",
       website: "",
       tipoEstabelecimento: "",
       usuarioId: null,
-      fotos: [], // array de strings com URLs das fotos já existentes
+      fotos: [], // Array de URLs das fotos existentes
     });
     const comercioId = route.params.id;
 
-    // Vetor de novos arquivos selecionados (File objects)
+    // Vetor para armazenar novos arquivos selecionados (File objects)
     const newPhotos = ref([]);
-    // Vetor de URLs para preview das novas fotos
+    // Vetor para armazenar os previews (URLs) das novas fotos
     const newPhotosPreviews = ref([]);
-
-    // Calcula os previews dos novos arquivos na mudança
-    const handleNewPhotos = (event) => {
-      const files = event.target.files;
-      for (let i = 0; i < files.length; i++) {
-        newPhotos.value.push(files[i]);
-        // Cria URL de preview
-        newPhotosPreviews.value.push(URL.createObjectURL(files[i]));
-      }
-      // Limpa o input de arquivo para possibilitar a seleção dos mesmos arquivos novamente, se necessário.
-      event.target.value = "";
-    };
-
-    // Remove uma foto existente do array
-    const removeExistingPhoto = (index) => {
-      comercio.value.fotos.splice(index, 1);
-    };
-
-    // Remove uma nova foto (File) e seu preview
-    const removeNewPhoto = (index) => {
-      newPhotos.value.splice(index, 1);
-      newPhotosPreviews.value.splice(index, 1);
-    };
 
     // Busca os dados do comércio a partir do id da rota
     const fetchComercio = async () => {
@@ -190,39 +176,66 @@ export default {
       }
     };
 
+    // Remove uma foto existente pelo índice
+    const removeExistingPhoto = (index) => {
+      comercio.value.fotos.splice(index, 1);
+    };
+
+    // Trata a seleção de novos arquivos e gera preview URLs
+    const handleNewPhotos = (event) => {
+      const files = event.target.files;
+      for (let i = 0; i < files.length; i++) {
+        newPhotos.value.push(files[i]);
+        newPhotosPreviews.value.push(URL.createObjectURL(files[i]));
+      }
+      event.target.value = "";
+    };
+
+    // Remove uma nova foto (arquivo e preview)
+    const removeNewPhoto = (index) => {
+      newPhotos.value.splice(index, 1);
+      newPhotosPreviews.value.splice(index, 1);
+    };
+
+    // Atualiza o comércio enviando um FormData com:
+    // - a parte "comercio": os dados do comércio (exceto fotos) como JSON Blob;
+    // - a parte "fotosExistentes": JSON string com as URLs das fotos mantidas;
+    // - a parte "novasFotos": os arquivos selecionados.
     const updateComercio = async () => {
       try {
-        // Create an object with only the commerce fields (excluding photos)
+        // Cria o objeto com os dados do comércio, incluindo o campo "categoria"
         const commerceData = {
           titulo: comercio.value.titulo,
           descricao: comercio.value.descricao,
+          categoria: comercio.value.categoria, // Campo obrigatório
           enderecoCompleto: comercio.value.enderecoCompleto,
           horarioFuncionamento: comercio.value.horarioFuncionamento,
           telefone: comercio.value.telefone,
           website: comercio.value.website,
           tipoEstabelecimento: comercio.value.tipoEstabelecimento,
-          usuarioId: comercio.value.usuarioId, // include if needed by backend
+          usuarioId: comercio.value.usuarioId,
         };
 
+        console.log("Commerce Data:", JSON.stringify(commerceData));
+
         const formData = new FormData();
-        // Append the "comercio" part as a Blob with application/json content type
+        // Anexa a parte "comercio" como Blob JSON
         const comercioBlob = new Blob([JSON.stringify(commerceData)], {
           type: "application/json",
         });
         formData.append("comercio", comercioBlob);
 
-        // Append existing photos (as a JSON string)
+        // Anexa as fotos existentes (que o usuário não removeu)
         formData.append(
           "fotosExistentes",
           JSON.stringify(comercio.value.fotos)
         );
 
-        // Append any new photos if available
+        // Anexa as novas fotos (caso haja)
         newPhotos.value.forEach((file) => {
           formData.append("novasFotos", file);
         });
 
-        // Do not override the Content-Type header so that Axios sets the proper boundary automatically.
         await axiosInstance.put(`/comercios/${comercioId}`, formData);
         alert("Comércio atualizado com sucesso!");
         router.push("/meusanuncios");
