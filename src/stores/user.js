@@ -1,13 +1,15 @@
+// src/stores/user.js
 import { defineStore } from "pinia";
 import { jwtDecode } from "jwt-decode";
 
 export const useUserStore = defineStore("user", {
   state: () => ({
     token: null,
-    userId: "", // Nova propriedade para armazenar o id do usuário
+    userId: "",
     firstName: "",
     lastName: "",
     email: "",
+    role: "", // ← novo campo
     isAuthenticated: false,
   }),
   actions: {
@@ -16,18 +18,17 @@ export const useUserStore = defineStore("user", {
       if (token) {
         try {
           const decoded = jwtDecode(token);
-          // Armazena o id do usuário (aqui usamos "id" – ajuste conforme o claim do seu token)
           this.userId = decoded.id || decoded.sub || "";
 
-          // Para o nome, se existir "firstName" use-o; senão, use "name"
           const fullName = decoded.firstName || decoded.name || "";
           if (fullName) {
             const names = fullName.split(" ");
             this.firstName = names.shift() || "";
             this.lastName = names.join(" ") || "";
           }
-          // Para o email, utiliza "email" se existir, ou "sub" caso o token use este claim para o email
+
           this.email = decoded.email || decoded.sub || "";
+          this.role = decoded.role || ""; // ← pega o claim "role"
 
           this.isAuthenticated = true;
         } catch (error) {
@@ -44,6 +45,7 @@ export const useUserStore = defineStore("user", {
       this.firstName = "";
       this.lastName = "";
       this.email = "";
+      this.role = ""; // ← limpa também
       this.isAuthenticated = false;
     },
     logout() {

@@ -2,46 +2,36 @@
   <div>
     <Header :showSearch="true" />
 
-    <!-- Detalhes do Aluguel -->
+    <!-- Detalhes do Comércio -->
     <div class="details-container">
-      <h2>{{ aluguel.titulo }}</h2>
+      <h2>{{ comercio.titulo }}</h2>
       <div class="carousel">
         <button
-          v-if="aluguel.fotos && aluguel.fotos.length > 1"
+          v-if="comercio.fotos && comercio.fotos.length > 1"
           @click="prevPhoto"
           class="carousel-btn"
         >
           ‹
         </button>
-        <img :src="currentPhoto" alt="Foto do aluguel" class="detail-photo" />
+        <img :src="currentPhoto" alt="Foto do comércio" class="detail-photo" />
         <button
-          v-if="aluguel.fotos && aluguel.fotos.length > 1"
+          v-if="comercio.fotos && comercio.fotos.length > 1"
           @click="nextPhoto"
           class="carousel-btn"
         >
           ›
         </button>
       </div>
-      <p><strong>Descrição:</strong> {{ aluguel.descricao }}</p>
-      <p><strong>Categoria:</strong> {{ aluguel.categoria }}</p>
-      <p><strong>Endereço:</strong> {{ aluguel.enderecoCompleto }}</p>
-      <p><strong>Valor do Aluguel:</strong> R$ {{ aluguel.valorAluguel }}</p>
+      <p><strong>Descrição:</strong> {{ comercio.descricao }}</p>
+      <p><strong>Endereço:</strong> {{ comercio.enderecoCompleto }}</p>
       <p>
-        <strong>Número de Banheiros:</strong> {{ aluguel.numeroDeBanheiros }}
+        <strong>Horário de Funcionamento:</strong>
+        {{ comercio.horarioFuncionamento }}
       </p>
-      <p><strong>Número de Vagas:</strong> {{ aluguel.numeroDeVagas }}</p>
-      <p>
-        <strong>Data de Disponibilidade:</strong>
-        {{ aluguel.dataDisponibilidade }}
-      </p>
-      <p><strong>Status:</strong> {{ aluguel.status }}</p>
-      <p><strong>Número de Quartos:</strong> {{ aluguel.numeroDeQuartos }}</p>
-      <p><strong>Área (m²):</strong> {{ aluguel.areaEmM2 }}</p>
-      <p><strong>Mobiliado:</strong> {{ aluguel.mobiliado ? "Sim" : "Não" }}</p>
-      <p><strong>Valor de Caução:</strong> R$ {{ aluguel.valorCaucao }}</p>
-      <p>
-        <strong>Período Mínimo de Contrato:</strong>
-        {{ aluguel.periodoMinimoContrato }}
+      <p><strong>Telefone:</strong> {{ comercio.telefone }}</p>
+      <p v-if="comercio.website">
+        <strong>Website:</strong>
+        <a :href="comercio.website" target="_blank">{{ comercio.website }}</a>
       </p>
     </div>
 
@@ -74,7 +64,7 @@
       <p>Faça login para deixar sua avaliação.</p>
     </div>
 
-    <!-- Lista de avaliações já enviadas para este aluguel -->
+    <!-- Lista de avaliações já enviadas para este comércio -->
     <div class="avaliacoes-list">
       <h3>Avaliações</h3>
       <div v-if="avaliacoes.length === 0">
@@ -85,7 +75,7 @@
         :key="avaliacaoItem.id"
         class="avaliacao-item"
       >
-        <!-- Exibição de estrelas baseada na nota -->
+        <!-- Exibição com estrelas -->
         <div class="star-display">
           <span
             v-for="star in 5"
@@ -96,7 +86,7 @@
           </span>
         </div>
         <p><strong>Comentário:</strong> {{ avaliacaoItem.comentario }}</p>
-        <!-- Exibe a resposta, se houver -->
+        <!-- Exibe a resposta, se existir -->
         <p v-if="avaliacaoItem.resposta" class="resposta-display">
           <strong>Resposta:</strong> {{ avaliacaoItem.resposta }}
         </p>
@@ -123,23 +113,23 @@
 </template>
 
 <script>
-import Header from "../components/Header.vue";
-import Footer from "../components/Footer.vue";
+import Header from "@/components/Header.vue";
+import Footer from "@/components/Footer.vue";
 import { ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import axiosInstance from "@/services/axios.js";
-import { useUserStore } from "@/stores/user"; // Store do Pinia
+import { useUserStore } from "@/stores/user"; // A store do Pinia para autenticação
 
 export default {
-  name: "DetalhesAluguel",
+  name: "DetalhesComercio",
   components: { Header, Footer },
   setup() {
     const route = useRoute();
-    const aluguelId = route.params.id;
-    const aluguel = ref({});
+    const comercioId = route.params.id;
+    const comercio = ref({});
     const currentPhotoIndex = ref(0);
 
-    // Integração com a store de autenticação
+    // Integração com a store do Pinia
     const userStore = useUserStore();
     const isAuthenticated = computed(() => userStore.isAuthenticated);
     const currentUser = computed(() => ({
@@ -149,61 +139,61 @@ export default {
       email: userStore.email,
     }));
 
-    // Dados do formulário de avaliação
+    // Dados do formulário de avaliação – inicialmente com nota 5
     const avaliacao = ref({
       nota: 5,
       comentario: "",
     });
 
-    // Lista de avaliações do aluguel
+    // Lista de avaliações do comércio
     const avaliacoes = ref([]);
 
     const currentPhoto = computed(() => {
-      if (aluguel.value.fotos && aluguel.value.fotos.length > 0) {
-        return aluguel.value.fotos[currentPhotoIndex.value];
+      if (comercio.value.fotos && comercio.value.fotos.length > 0) {
+        return comercio.value.fotos[currentPhotoIndex.value];
       }
       return "https://via.placeholder.com/500";
     });
 
     const nextPhoto = () => {
-      if (aluguel.value.fotos && aluguel.value.fotos.length > 0) {
+      if (comercio.value.fotos && comercio.value.fotos.length > 0) {
         currentPhotoIndex.value =
-          (currentPhotoIndex.value + 1) % aluguel.value.fotos.length;
+          (currentPhotoIndex.value + 1) % comercio.value.fotos.length;
       }
     };
 
     const prevPhoto = () => {
-      if (aluguel.value.fotos && aluguel.value.fotos.length > 0) {
+      if (comercio.value.fotos && comercio.value.fotos.length > 0) {
         currentPhotoIndex.value =
-          (currentPhotoIndex.value - 1 + aluguel.value.fotos.length) %
-          aluguel.value.fotos.length;
+          (currentPhotoIndex.value - 1 + comercio.value.fotos.length) %
+          comercio.value.fotos.length;
       }
     };
 
-    const fetchAluguel = async () => {
+    const fetchComercio = async () => {
       try {
-        const response = await axiosInstance.get(`/alugueis/${aluguelId}`);
-        aluguel.value = response.data;
-        console.log("Dados do aluguel obtidos:", response.data);
+        const response = await axiosInstance.get(`/comercios/${comercioId}`);
+        comercio.value = response.data;
+        console.log("Dados do comércio obtidos:", response.data);
       } catch (error) {
-        console.error("Erro ao buscar aluguel:", error);
+        console.error("Erro ao buscar comércio:", error);
       }
     };
 
     const fetchAvaliacoes = async () => {
       try {
         const response = await axiosInstance.get(
-          `/avaliacoes/item?tipoItem=aluguel&itemId=${aluguelId}`
+          `/avaliacoes/item?tipoItem=comercio&itemId=${comercioId}`
         );
         avaliacoes.value = response.data;
-        console.log("Avaliações do aluguel obtidas:", avaliacoes.value);
+        console.log("Avaliações do comércio obtidas:", avaliacoes.value);
       } catch (error) {
         console.error("Erro ao buscar avaliações:", error);
       }
     };
 
     onMounted(() => {
-      fetchAluguel();
+      fetchComercio();
       fetchAvaliacoes();
       console.log("Autenticação (isAuthenticated):", isAuthenticated.value);
       if (isAuthenticated.value) {
@@ -211,14 +201,14 @@ export default {
       }
     });
 
-    // Atualiza a nota ao clicar em uma estrela
+    // Atualiza a nota da avaliação ao clicar em uma estrela
     const setRating = (star) => {
       avaliacao.value.nota = star;
     };
 
     const submitAvaliacao = async () => {
-      if (!aluguel.value.id) {
-        alert("Aluguel inválido.");
+      if (!comercio.value.id) {
+        alert("Comércio inválido.");
         return;
       }
       if (!currentUser.value?.id) {
@@ -229,8 +219,8 @@ export default {
         const payload = {
           nota: avaliacao.value.nota,
           comentario: avaliacao.value.comentario,
-          tipoItem: "aluguel",
-          itemId: aluguel.value.id,
+          tipoItem: "comercio",
+          itemId: comercio.value.id,
           usuarioId: currentUser.value.id,
         };
         console.log("Payload da avaliação:", payload);
@@ -238,7 +228,7 @@ export default {
         alert("Avaliação enviada com sucesso!");
         avaliacao.value.nota = 5;
         avaliacao.value.comentario = "";
-        fetchAvaliacoes(); // Atualiza a lista de avaliações
+        fetchAvaliacoes();
       } catch (error) {
         console.error("Erro ao enviar avaliação:", error);
         alert("Erro ao enviar avaliação.");
@@ -246,7 +236,7 @@ export default {
     };
 
     return {
-      aluguel,
+      comercio,
       currentPhoto,
       nextPhoto,
       prevPhoto,
@@ -390,22 +380,25 @@ export default {
   border-bottom: none;
 }
 
-/* Exibição de estrelas nas avaliações */
-.star-display {
+/* Exibição de estrelas */
+.star-display,
+.star-rating {
   margin-bottom: 0.4rem;
 }
 
-.star-display span {
+.star-display span,
+.star-rating span {
   font-size: 1.2rem;
   color: #ccc;
   margin-right: 2px;
 }
 
-.star-display span.filled {
+.star-display span.filled,
+.star-rating span.filled {
   color: gold;
 }
 
-/* Responsividade geral */
+/* Responsividade */
 @media (max-width: 600px) {
   .details-container,
   .avaliacao-container,
@@ -415,7 +408,7 @@ export default {
   }
 }
 
-/* Destaque para resposta exibida */
+/* Destaque para a resposta exibida */
 .resposta-display {
   background-color: #f8f9fa;
   padding: 0.3rem;

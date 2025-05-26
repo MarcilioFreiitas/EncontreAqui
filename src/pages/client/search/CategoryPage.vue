@@ -24,10 +24,10 @@
 <script>
 import { onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import Header from "../components/Header.vue";
-import Footer from "../components/Footer.vue";
+import Header from "@/components/Header.vue";
+import Footer from "@/components/Footer.vue";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../firebaseConfig";
+import { db } from "@/firebaseConfig";
 
 export default {
   name: "CategoryPage",

@@ -111,8 +111,8 @@
 <script>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import Header from "../components/Header.vue";
-import Footer from "../components/Footer.vue";
+import Header from "@/components/Header.vue";
+import Footer from "@/components/Footer.vue";
 import axios from "axios";
 import { useUserStore } from "@/stores/user";
 import axiosInstance from "@/services/axios.js";

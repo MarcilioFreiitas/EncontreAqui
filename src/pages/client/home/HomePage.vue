@@ -135,10 +135,10 @@
 import { ref, onMounted } from "vue";
 import { collection, addDoc } from "firebase/firestore";
 import { signOut, onAuthStateChanged, getAuth } from "firebase/auth";
-import { db } from "../firebaseConfig";
+import { db } from "@/firebaseConfig";
 
-import Header from "../components/Header.vue";
-import Footer from "../components/Footer.vue";
+import Header from "@/components/Header.vue";
+import Footer from "@/components/Footer.vue";
 
 const auth = getAuth();
 const isAuthenticated = ref(false);

@@ -146,9 +146,9 @@ import {
   deleteDoc,
   getDoc,
 } from "firebase/firestore";
-import { db } from "../firebaseConfig";
-import Header from "../components/Header.vue";
-import Footer from "../components/Footer.vue";
+import { db } from "@/firebaseConfig";
+import Header from "@/components/Header.vue";
+import Footer from "@/components/Footer.vue";
 
 export default {
   name: "EncontrePage",

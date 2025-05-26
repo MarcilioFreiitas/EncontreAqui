@@ -13,6 +13,7 @@
     "bootstrap-icons": "^1.11.3",
     "firebase": "^11.0.2",
     "jwt-decode": "^4.0.0",
+    "lucide-vue-next": "^0.511.0",
     "pinia": "^3.0.2",
     "vue": "^3.3.4",
     "vue-router": "^4.4.5",

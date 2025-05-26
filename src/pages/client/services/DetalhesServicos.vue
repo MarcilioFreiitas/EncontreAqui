@@ -2,40 +2,46 @@
   <div>
     <Header :showSearch="true" />
 
-    <!-- Detalhes do Comércio -->
+    <!-- Detalhes do Serviço -->
     <div class="details-container">
-      <h2>{{ comercio.titulo }}</h2>
+      <h2>{{ servico.titulo }}</h2>
       <div class="carousel">
         <button
-          v-if="comercio.fotos && comercio.fotos.length > 1"
+          v-if="servico.fotos && servico.fotos.length > 1"
           @click="prevPhoto"
           class="carousel-btn"
         >
           ‹
         </button>
-        <img :src="currentPhoto" alt="Foto do comércio" class="detail-photo" />
+        <img :src="currentPhoto" alt="Foto do serviço" class="detail-photo" />
         <button
-          v-if="comercio.fotos && comercio.fotos.length > 1"
+          v-if="servico.fotos && servico.fotos.length > 1"
           @click="nextPhoto"
           class="carousel-btn"
         >
           ›
         </button>
       </div>
-      <p><strong>Descrição:</strong> {{ comercio.descricao }}</p>
-      <p><strong>Endereço:</strong> {{ comercio.enderecoCompleto }}</p>
+      <p><strong>Descrição:</strong> {{ servico.descricao }}</p>
+      <p><strong>Preço:</strong> R$ {{ servico.preco }}</p>
+      <p><strong>Categoria:</strong> {{ servico.categoria }}</p>
+      <p><strong>Localização:</strong> {{ servico.localizacao }}</p>
+      <p><strong>Área de Atuação:</strong> {{ servico.areaAtuacao }}</p>
       <p>
-        <strong>Horário de Funcionamento:</strong>
-        {{ comercio.horarioFuncionamento }}
+        <strong>Tempo Médio de Atendimento:</strong>
+        {{ servico.tempoMedioAtendimento }} minutos
       </p>
-      <p><strong>Telefone:</strong> {{ comercio.telefone }}</p>
-      <p v-if="comercio.website">
-        <strong>Website:</strong>
-        <a :href="comercio.website" target="_blank">{{ comercio.website }}</a>
+      <p>
+        <strong>Necessita Agendamento:</strong>
+        {{ servico.necessitaAgendamento ? "Sim" : "Não" }}
+      </p>
+      <p>
+        <strong>Profissional Responsável:</strong>
+        {{ servico.profissionalResponsavel }}
       </p>
     </div>
 
-    <!-- Formulário de avaliação para usuário autenticado -->
+    <!-- Formulário de avaliação, exibido se o usuário estiver autenticado -->
     <div class="avaliacao-container" v-if="isAuthenticated">
       <h3>Deixe sua Avaliação</h3>
       <form @submit.prevent="submitAvaliacao">
@@ -55,6 +61,7 @@
           v-model="avaliacao.comentario"
           placeholder="Escreva seu comentário..."
         ></textarea>
+        <!-- Container para o botão de envio -->
         <div class="button-wrapper">
           <button type="submit">Enviar Avaliação</button>
         </div>
@@ -64,7 +71,7 @@
       <p>Faça login para deixar sua avaliação.</p>
     </div>
 
-    <!-- Lista de avaliações já enviadas para este comércio -->
+    <!-- Lista de avaliações do serviço -->
     <div class="avaliacoes-list">
       <h3>Avaliações</h3>
       <div v-if="avaliacoes.length === 0">
@@ -75,7 +82,7 @@
         :key="avaliacaoItem.id"
         class="avaliacao-item"
       >
-        <!-- Exibição com estrelas -->
+        <!-- Exibição de estrelas para a nota -->
         <div class="star-display">
           <span
             v-for="star in 5"
@@ -113,23 +120,23 @@
 </template>
 
 <script>
-import Header from "../components/Header.vue";
-import Footer from "../components/Footer.vue";
+import Header from "@/components/Header.vue";
+import Footer from "@/components/Footer.vue";
 import { ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import axiosInstance from "@/services/axios.js";
-import { useUserStore } from "@/stores/user"; // A store do Pinia para autenticação
+import { useUserStore } from "@/stores/user"; // Store do Pinia para autenticação
 
 export default {
-  name: "DetalhesComercio",
+  name: "DetalhesServicos",
   components: { Header, Footer },
   setup() {
     const route = useRoute();
-    const comercioId = route.params.id;
-    const comercio = ref({});
+    const servicoId = route.params.id;
+    const servico = ref({});
     const currentPhotoIndex = ref(0);
 
-    // Integração com a store do Pinia
+    // Integração com a store para autenticação
     const userStore = useUserStore();
     const isAuthenticated = computed(() => userStore.isAuthenticated);
     const currentUser = computed(() => ({
@@ -139,61 +146,61 @@ export default {
       email: userStore.email,
     }));
 
-    // Dados do formulário de avaliação – inicialmente com nota 5
+    // Dados do formulário da avaliação (nota e comentário)
     const avaliacao = ref({
       nota: 5,
       comentario: "",
     });
 
-    // Lista de avaliações do comércio
+    // Lista de avaliações para o serviço
     const avaliacoes = ref([]);
 
     const currentPhoto = computed(() => {
-      if (comercio.value.fotos && comercio.value.fotos.length > 0) {
-        return comercio.value.fotos[currentPhotoIndex.value];
+      if (servico.value.fotos && servico.value.fotos.length > 0) {
+        return servico.value.fotos[currentPhotoIndex.value];
       }
       return "https://via.placeholder.com/500";
     });
 
     const nextPhoto = () => {
-      if (comercio.value.fotos && comercio.value.fotos.length > 0) {
+      if (servico.value.fotos && servico.value.fotos.length > 0) {
         currentPhotoIndex.value =
-          (currentPhotoIndex.value + 1) % comercio.value.fotos.length;
+          (currentPhotoIndex.value + 1) % servico.value.fotos.length;
       }
     };
 
     const prevPhoto = () => {
-      if (comercio.value.fotos && comercio.value.fotos.length > 0) {
+      if (servico.value.fotos && servico.value.fotos.length > 0) {
         currentPhotoIndex.value =
-          (currentPhotoIndex.value - 1 + comercio.value.fotos.length) %
-          comercio.value.fotos.length;
+          (currentPhotoIndex.value - 1 + servico.value.fotos.length) %
+          servico.value.fotos.length;
       }
     };
 
-    const fetchComercio = async () => {
+    const fetchServico = async () => {
       try {
-        const response = await axiosInstance.get(`/comercios/${comercioId}`);
-        comercio.value = response.data;
-        console.log("Dados do comércio obtidos:", response.data);
+        const response = await axiosInstance.get(`/servicos/${servicoId}`);
+        servico.value = response.data;
+        console.log("Dados do serviço obtidos:", response.data);
       } catch (error) {
-        console.error("Erro ao buscar comércio:", error);
+        console.error("Erro ao buscar serviço:", error);
       }
     };
 
     const fetchAvaliacoes = async () => {
       try {
         const response = await axiosInstance.get(
-          `/avaliacoes/item?tipoItem=comercio&itemId=${comercioId}`
+          `/avaliacoes/item?tipoItem=servico&itemId=${servicoId}`
         );
         avaliacoes.value = response.data;
-        console.log("Avaliações do comércio obtidas:", avaliacoes.value);
+        console.log("Avaliações do serviço obtidas:", avaliacoes.value);
       } catch (error) {
         console.error("Erro ao buscar avaliações:", error);
       }
     };
 
     onMounted(() => {
-      fetchComercio();
+      fetchServico();
       fetchAvaliacoes();
       console.log("Autenticação (isAuthenticated):", isAuthenticated.value);
       if (isAuthenticated.value) {
@@ -201,14 +208,14 @@ export default {
       }
     });
 
-    // Atualiza a nota da avaliação ao clicar em uma estrela
+    // Atualiza a nota da avaliação ao clicar nas estrelas
     const setRating = (star) => {
       avaliacao.value.nota = star;
     };
 
     const submitAvaliacao = async () => {
-      if (!comercio.value.id) {
-        alert("Comércio inválido.");
+      if (!servico.value.id) {
+        alert("Serviço inválido.");
         return;
       }
       if (!currentUser.value?.id) {
@@ -219,8 +226,8 @@ export default {
         const payload = {
           nota: avaliacao.value.nota,
           comentario: avaliacao.value.comentario,
-          tipoItem: "comercio",
-          itemId: comercio.value.id,
+          tipoItem: "servico",
+          itemId: servico.value.id,
           usuarioId: currentUser.value.id,
         };
         console.log("Payload da avaliação:", payload);
@@ -228,7 +235,7 @@ export default {
         alert("Avaliação enviada com sucesso!");
         avaliacao.value.nota = 5;
         avaliacao.value.comentario = "";
-        fetchAvaliacoes();
+        fetchAvaliacoes(); // Atualiza as avaliações após envio
       } catch (error) {
         console.error("Erro ao enviar avaliação:", error);
         alert("Erro ao enviar avaliação.");
@@ -236,7 +243,7 @@ export default {
     };
 
     return {
-      comercio,
+      servico,
       currentPhoto,
       nextPhoto,
       prevPhoto,
@@ -301,8 +308,20 @@ export default {
   flex-direction: column;
 }
 
-.avaliacao-container label {
-  margin-top: 0.5rem;
+.star-selector {
+  margin-bottom: 1rem;
+}
+
+.star-selector span {
+  font-size: 1.8rem;
+  color: #ccc;
+  cursor: pointer;
+  margin-right: 4px;
+  transition: color 0.2s;
+}
+
+.star-selector span.filled {
+  color: gold;
 }
 
 .avaliacao-container textarea {
@@ -315,25 +334,11 @@ export default {
   border-radius: 4px;
 }
 
-/* Star selector */
-.star-selector {
-  margin-bottom: 1rem;
-}
-.star-selector span {
-  font-size: 1.8rem;
-  color: #ccc;
-  cursor: pointer;
-  margin-right: 4px;
-  transition: color 0.2s;
-}
-.star-selector span.filled {
-  color: gold;
-}
-
-/* Container para o botão */
+/* Button wrapper para o botão de envio */
 .button-wrapper {
   margin-top: 1rem;
 }
+
 .button-wrapper button {
   background-color: #007bff;
   color: #fff;
@@ -343,7 +348,7 @@ export default {
   transition: background-color 0.2s;
 }
 
-/* Layout para tablet/desktop */
+/* Desktop/tablet: botão alinhado à direita */
 @media (min-width: 768px) {
   .button-wrapper {
     display: flex;
@@ -355,7 +360,7 @@ export default {
   }
 }
 
-/* Layout para dispositivos móveis */
+/* Dispositivos móveis: botão full width */
 @media (max-width: 767px) {
   .button-wrapper button {
     padding: 0.8rem;
@@ -380,25 +385,21 @@ export default {
   border-bottom: none;
 }
 
-/* Exibição de estrelas */
-.star-display,
-.star-rating {
+.star-display {
   margin-bottom: 0.4rem;
 }
 
-.star-display span,
-.star-rating span {
+.star-display span {
   font-size: 1.2rem;
   color: #ccc;
   margin-right: 2px;
 }
 
-.star-display span.filled,
-.star-rating span.filled {
+.star-display span.filled {
   color: gold;
 }
 
-/* Responsividade */
+/* Responsividade geral para containers */
 @media (max-width: 600px) {
   .details-container,
   .avaliacao-container,
@@ -408,7 +409,7 @@ export default {
   }
 }
 
-/* Destaque para a resposta exibida */
+/* Estilo para destacar a resposta exibida */
 .resposta-display {
   background-color: #f8f9fa;
   padding: 0.3rem;

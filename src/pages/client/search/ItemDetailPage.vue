@@ -58,8 +58,8 @@
 <script>
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import Header from "../components/Header.vue";
-import Footer from "../components/Footer.vue";
+import Header from "@/components/Header.vue";
+import Footer from "@/components/Footer.vue";
 import {
   doc,
   getDoc,
@@ -70,9 +70,9 @@ import {
   getDocs,
   serverTimestamp,
 } from "firebase/firestore";
-import { db } from "../firebaseConfig";
+import { db } from "@/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../firebaseConfig";
+import { auth } from "@/firebaseConfig";
 
 export default {
   name: "ItemDetailPage",

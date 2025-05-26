@@ -35,10 +35,10 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
-import Header from "../components/Header.vue";
-import Footer from "../components/Footer.vue";
+import Header from "@/components/Header.vue";
+import Footer from "@/components/Footer.vue";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { auth, db } from "../firebaseConfig";
+import { auth, db } from "@/firebaseConfig";
 import { doc, setDoc } from "firebase/firestore";
 import { useUserStore } from "@/stores/user";
 
@@ -74,31 +74,32 @@ const validateLogin = () => {
 
 const login = async () => {
   if (!validateLogin()) return;
+
   try {
-    // Envia os dados para o backend
     const response = await axios.post(
       "http://localhost:8080/api/usuarios/login",
-      {
-        email: email.value,
-        senha: password.value,
-      }
+      { email: email.value, senha: password.value }
     );
-    // Supondo que o backend retorne um objeto com { token: "...." }
     const token = response.data.token;
     localStorage.setItem("token", token);
-    // Armazena o token na store
     userStore.setToken(token);
-    // Adicione logs para verificar as informações do token extraídas pela store
-    console.log("Token armazenado:", token);
-    console.log("Dados extraídos na store:");
-    console.log("ID:", userStore.userId);
-    console.log("Nome:", userStore.firstName);
-    console.log("Sobrenome:", userStore.lastName);
-    console.log("Email:", userStore.email);
-    router.push("/");
+
+    console.log("Role raw:", userStore.role);
+
+    // Normaliza o role (tira um eventual prefixo "ROLE_")
+    const normalizedRole = userStore.role?.toUpperCase().replace(/^ROLE_/, "");
+
+    console.log("Role normalizada:", normalizedRole);
+
+    if (normalizedRole === "ADMIN") {
+      // redireciona para /admin, que carrega o PainelControle
+      router.push({ name: "admin.dashboard" });
+    } else {
+      router.push("/");
+    }
   } catch (error) {
     console.error("Erro ao fazer login:", error.response || error);
-    if (error.response && error.response.status === 401) {
+    if (error.response?.status === 401) {
       errorMessage.value =
         "Credenciais inválidas. Verifique seu email ou senha.";
     } else {

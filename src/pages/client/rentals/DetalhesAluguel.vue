@@ -2,46 +2,50 @@
   <div>
     <Header :showSearch="true" />
 
-    <!-- Detalhes do Serviço -->
+    <!-- Detalhes do Aluguel -->
     <div class="details-container">
-      <h2>{{ servico.titulo }}</h2>
+      <h2>{{ aluguel.titulo }}</h2>
       <div class="carousel">
         <button
-          v-if="servico.fotos && servico.fotos.length > 1"
+          v-if="aluguel.fotos && aluguel.fotos.length > 1"
           @click="prevPhoto"
           class="carousel-btn"
         >
           ‹
         </button>
-        <img :src="currentPhoto" alt="Foto do serviço" class="detail-photo" />
+        <img :src="currentPhoto" alt="Foto do aluguel" class="detail-photo" />
         <button
-          v-if="servico.fotos && servico.fotos.length > 1"
+          v-if="aluguel.fotos && aluguel.fotos.length > 1"
           @click="nextPhoto"
           class="carousel-btn"
         >
           ›
         </button>
       </div>
-      <p><strong>Descrição:</strong> {{ servico.descricao }}</p>
-      <p><strong>Preço:</strong> R$ {{ servico.preco }}</p>
-      <p><strong>Categoria:</strong> {{ servico.categoria }}</p>
-      <p><strong>Localização:</strong> {{ servico.localizacao }}</p>
-      <p><strong>Área de Atuação:</strong> {{ servico.areaAtuacao }}</p>
+      <p><strong>Descrição:</strong> {{ aluguel.descricao }}</p>
+      <p><strong>Categoria:</strong> {{ aluguel.categoria }}</p>
+      <p><strong>Endereço:</strong> {{ aluguel.enderecoCompleto }}</p>
+      <p><strong>Valor do Aluguel:</strong> R$ {{ aluguel.valorAluguel }}</p>
       <p>
-        <strong>Tempo Médio de Atendimento:</strong>
-        {{ servico.tempoMedioAtendimento }} minutos
+        <strong>Número de Banheiros:</strong> {{ aluguel.numeroDeBanheiros }}
       </p>
+      <p><strong>Número de Vagas:</strong> {{ aluguel.numeroDeVagas }}</p>
       <p>
-        <strong>Necessita Agendamento:</strong>
-        {{ servico.necessitaAgendamento ? "Sim" : "Não" }}
+        <strong>Data de Disponibilidade:</strong>
+        {{ aluguel.dataDisponibilidade }}
       </p>
+      <p><strong>Status:</strong> {{ aluguel.status }}</p>
+      <p><strong>Número de Quartos:</strong> {{ aluguel.numeroDeQuartos }}</p>
+      <p><strong>Área (m²):</strong> {{ aluguel.areaEmM2 }}</p>
+      <p><strong>Mobiliado:</strong> {{ aluguel.mobiliado ? "Sim" : "Não" }}</p>
+      <p><strong>Valor de Caução:</strong> R$ {{ aluguel.valorCaucao }}</p>
       <p>
-        <strong>Profissional Responsável:</strong>
-        {{ servico.profissionalResponsavel }}
+        <strong>Período Mínimo de Contrato:</strong>
+        {{ aluguel.periodoMinimoContrato }}
       </p>
     </div>
 
-    <!-- Formulário de avaliação, exibido se o usuário estiver autenticado -->
+    <!-- Formulário de avaliação para usuário autenticado -->
     <div class="avaliacao-container" v-if="isAuthenticated">
       <h3>Deixe sua Avaliação</h3>
       <form @submit.prevent="submitAvaliacao">
@@ -61,7 +65,6 @@
           v-model="avaliacao.comentario"
           placeholder="Escreva seu comentário..."
         ></textarea>
-        <!-- Container para o botão de envio -->
         <div class="button-wrapper">
           <button type="submit">Enviar Avaliação</button>
         </div>
@@ -71,7 +74,7 @@
       <p>Faça login para deixar sua avaliação.</p>
     </div>
 
-    <!-- Lista de avaliações do serviço -->
+    <!-- Lista de avaliações já enviadas para este aluguel -->
     <div class="avaliacoes-list">
       <h3>Avaliações</h3>
       <div v-if="avaliacoes.length === 0">
@@ -82,7 +85,7 @@
         :key="avaliacaoItem.id"
         class="avaliacao-item"
       >
-        <!-- Exibição de estrelas para a nota -->
+        <!-- Exibição de estrelas baseada na nota -->
         <div class="star-display">
           <span
             v-for="star in 5"
@@ -93,7 +96,7 @@
           </span>
         </div>
         <p><strong>Comentário:</strong> {{ avaliacaoItem.comentario }}</p>
-        <!-- Exibe a resposta, se existir -->
+        <!-- Exibe a resposta, se houver -->
         <p v-if="avaliacaoItem.resposta" class="resposta-display">
           <strong>Resposta:</strong> {{ avaliacaoItem.resposta }}
         </p>
@@ -120,23 +123,23 @@
 </template>
 
 <script>
-import Header from "../components/Header.vue";
-import Footer from "../components/Footer.vue";
+import Header from "@/components/Header.vue";
+import Footer from "@/components/Footer.vue";
 import { ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import axiosInstance from "@/services/axios.js";
-import { useUserStore } from "@/stores/user"; // Store do Pinia para autenticação
+import { useUserStore } from "@/stores/user"; // Store do Pinia
 
 export default {
-  name: "DetalhesServicos",
+  name: "DetalhesAluguel",
   components: { Header, Footer },
   setup() {
     const route = useRoute();
-    const servicoId = route.params.id;
-    const servico = ref({});
+    const aluguelId = route.params.id;
+    const aluguel = ref({});
     const currentPhotoIndex = ref(0);
 
-    // Integração com a store para autenticação
+    // Integração com a store de autenticação
     const userStore = useUserStore();
     const isAuthenticated = computed(() => userStore.isAuthenticated);
     const currentUser = computed(() => ({
@@ -146,61 +149,61 @@ export default {
       email: userStore.email,
     }));
 
-    // Dados do formulário da avaliação (nota e comentário)
+    // Dados do formulário de avaliação
     const avaliacao = ref({
       nota: 5,
       comentario: "",
     });
 
-    // Lista de avaliações para o serviço
+    // Lista de avaliações do aluguel
     const avaliacoes = ref([]);
 
     const currentPhoto = computed(() => {
-      if (servico.value.fotos && servico.value.fotos.length > 0) {
-        return servico.value.fotos[currentPhotoIndex.value];
+      if (aluguel.value.fotos && aluguel.value.fotos.length > 0) {
+        return aluguel.value.fotos[currentPhotoIndex.value];
       }
       return "https://via.placeholder.com/500";
     });
 
     const nextPhoto = () => {
-      if (servico.value.fotos && servico.value.fotos.length > 0) {
+      if (aluguel.value.fotos && aluguel.value.fotos.length > 0) {
         currentPhotoIndex.value =
-          (currentPhotoIndex.value + 1) % servico.value.fotos.length;
+          (currentPhotoIndex.value + 1) % aluguel.value.fotos.length;
       }
     };
 
     const prevPhoto = () => {
-      if (servico.value.fotos && servico.value.fotos.length > 0) {
+      if (aluguel.value.fotos && aluguel.value.fotos.length > 0) {
         currentPhotoIndex.value =
-          (currentPhotoIndex.value - 1 + servico.value.fotos.length) %
-          servico.value.fotos.length;
+          (currentPhotoIndex.value - 1 + aluguel.value.fotos.length) %
+          aluguel.value.fotos.length;
       }
     };
 
-    const fetchServico = async () => {
+    const fetchAluguel = async () => {
       try {
-        const response = await axiosInstance.get(`/servicos/${servicoId}`);
-        servico.value = response.data;
-        console.log("Dados do serviço obtidos:", response.data);
+        const response = await axiosInstance.get(`/alugueis/${aluguelId}`);
+        aluguel.value = response.data;
+        console.log("Dados do aluguel obtidos:", response.data);
       } catch (error) {
-        console.error("Erro ao buscar serviço:", error);
+        console.error("Erro ao buscar aluguel:", error);
       }
     };
 
     const fetchAvaliacoes = async () => {
       try {
         const response = await axiosInstance.get(
-          `/avaliacoes/item?tipoItem=servico&itemId=${servicoId}`
+          `/avaliacoes/item?tipoItem=aluguel&itemId=${aluguelId}`
         );
         avaliacoes.value = response.data;
-        console.log("Avaliações do serviço obtidas:", avaliacoes.value);
+        console.log("Avaliações do aluguel obtidas:", avaliacoes.value);
       } catch (error) {
         console.error("Erro ao buscar avaliações:", error);
       }
     };
 
     onMounted(() => {
-      fetchServico();
+      fetchAluguel();
       fetchAvaliacoes();
       console.log("Autenticação (isAuthenticated):", isAuthenticated.value);
       if (isAuthenticated.value) {
@@ -208,14 +211,14 @@ export default {
       }
     });
 
-    // Atualiza a nota da avaliação ao clicar nas estrelas
+    // Atualiza a nota ao clicar em uma estrela
     const setRating = (star) => {
       avaliacao.value.nota = star;
     };
 
     const submitAvaliacao = async () => {
-      if (!servico.value.id) {
-        alert("Serviço inválido.");
+      if (!aluguel.value.id) {
+        alert("Aluguel inválido.");
         return;
       }
       if (!currentUser.value?.id) {
@@ -226,8 +229,8 @@ export default {
         const payload = {
           nota: avaliacao.value.nota,
           comentario: avaliacao.value.comentario,
-          tipoItem: "servico",
-          itemId: servico.value.id,
+          tipoItem: "aluguel",
+          itemId: aluguel.value.id,
           usuarioId: currentUser.value.id,
         };
         console.log("Payload da avaliação:", payload);
@@ -235,7 +238,7 @@ export default {
         alert("Avaliação enviada com sucesso!");
         avaliacao.value.nota = 5;
         avaliacao.value.comentario = "";
-        fetchAvaliacoes(); // Atualiza as avaliações após envio
+        fetchAvaliacoes(); // Atualiza a lista de avaliações
       } catch (error) {
         console.error("Erro ao enviar avaliação:", error);
         alert("Erro ao enviar avaliação.");
@@ -243,7 +246,7 @@ export default {
     };
 
     return {
-      servico,
+      aluguel,
       currentPhoto,
       nextPhoto,
       prevPhoto,
@@ -308,20 +311,8 @@ export default {
   flex-direction: column;
 }
 
-.star-selector {
-  margin-bottom: 1rem;
-}
-
-.star-selector span {
-  font-size: 1.8rem;
-  color: #ccc;
-  cursor: pointer;
-  margin-right: 4px;
-  transition: color 0.2s;
-}
-
-.star-selector span.filled {
-  color: gold;
+.avaliacao-container label {
+  margin-top: 0.5rem;
 }
 
 .avaliacao-container textarea {
@@ -334,11 +325,25 @@ export default {
   border-radius: 4px;
 }
 
-/* Button wrapper para o botão de envio */
+/* Star selector */
+.star-selector {
+  margin-bottom: 1rem;
+}
+.star-selector span {
+  font-size: 1.8rem;
+  color: #ccc;
+  cursor: pointer;
+  margin-right: 4px;
+  transition: color 0.2s;
+}
+.star-selector span.filled {
+  color: gold;
+}
+
+/* Container para o botão */
 .button-wrapper {
   margin-top: 1rem;
 }
-
 .button-wrapper button {
   background-color: #007bff;
   color: #fff;
@@ -348,7 +353,7 @@ export default {
   transition: background-color 0.2s;
 }
 
-/* Desktop/tablet: botão alinhado à direita */
+/* Layout para tablet/desktop */
 @media (min-width: 768px) {
   .button-wrapper {
     display: flex;
@@ -360,7 +365,7 @@ export default {
   }
 }
 
-/* Dispositivos móveis: botão full width */
+/* Layout para dispositivos móveis */
 @media (max-width: 767px) {
   .button-wrapper button {
     padding: 0.8rem;
@@ -385,6 +390,7 @@ export default {
   border-bottom: none;
 }
 
+/* Exibição de estrelas nas avaliações */
 .star-display {
   margin-bottom: 0.4rem;
 }
@@ -399,7 +405,7 @@ export default {
   color: gold;
 }
 
-/* Responsividade geral para containers */
+/* Responsividade geral */
 @media (max-width: 600px) {
   .details-container,
   .avaliacao-container,
@@ -409,7 +415,7 @@ export default {
   }
 }
 
-/* Estilo para destacar a resposta exibida */
+/* Destaque para resposta exibida */
 .resposta-display {
   background-color: #f8f9fa;
   padding: 0.3rem;

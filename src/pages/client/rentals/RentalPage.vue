@@ -3,7 +3,7 @@
     <!-- O Header emite o evento "searched", que é capturado pelo método handleSearch -->
     <Header :showSearch="true" @searched="handleSearch" />
 
-    <!-- Bloco de filtro de categoria -->
+    <!-- Filtro de categoria -->
     <div class="filter-container">
       <label for="categoryFilter">Filtrar por Categoria:</label>
       <select id="categoryFilter" v-model="selectedCategory">
@@ -16,7 +16,7 @@
 
     <div class="categories">
       <div v-if="isLoading" class="loading">
-        <i class="fa fa-spinner fa-spin"></i> Carregando serviços...
+        <i class="fa fa-spinner fa-spin"></i> Carregando aluguéis...
       </div>
       <div v-else>
         <div
@@ -29,7 +29,7 @@
             <img
               src="@/assets/seta-direita.png"
               alt="Icon"
-              @click="viewAllItems(category.nome, 'service')"
+              @click="viewAllItems(category.nome, 'rental')"
               class="toggle-icon"
             />
           </div>
@@ -38,9 +38,9 @@
               v-for="item in category.items.slice(0, 3)"
               :key="item.id"
               class="item"
-              @click="viewItemDetail(item.id, 'service')"
+              @click="viewItemDetail(item.id, 'rental')"
             >
-              <!-- Exibe a primeira imagem; se não houver, utiliza um placeholder -->
+              <!-- Exibe a primeira imagem; se não houver, usa placeholder -->
               <img
                 :src="
                   item.fotos && item.fotos.length
@@ -52,11 +52,17 @@
               />
               <!-- Exibe o título -->
               <p class="item-title">{{ item.titulo }}</p>
-              <!-- Exibe o profissional responsável -->
-              <p class="item-profissional">
-                Profissional: {{ item.profissionalResponsavel }}
+              <!-- Exibe o status: 'Disponível' (verde) para ativo, ou 'Indisponível' (vermelho) caso contrário -->
+              <p
+                class="item-status"
+                :class="{
+                  'status-disponivel': item.status === 'ativo',
+                  'status-indisponivel': item.status !== 'ativo',
+                }"
+              >
+                {{ item.status === "ativo" ? "Disponível" : "Indisponível" }}
               </p>
-              <!-- Exibe as estrelas baseadas na média das avaliações -->
+              <!-- Exibe as estrelas de avaliação -->
               <div class="star-display">
                 <span
                   v-for="star in 5"
@@ -69,8 +75,9 @@
             </div>
           </div>
         </div>
+        <!-- Exibe mensagem caso nenhum resultado seja encontrado -->
         <div v-if="filteredCategories.length === 0" class="no-results">
-          Nenhum serviço encontrado.
+          Nenhum aluguel encontrado.
         </div>
       </div>
     </div>
@@ -79,13 +86,13 @@
 </template>
 
 <script>
-import Header from "../components/Header.vue";
-import Footer from "../components/Footer.vue";
+import Header from "@/components/Header.vue";
+import Footer from "@/components/Footer.vue";
 import { useRouter } from "vue-router";
 import axiosInstance from "@/services/axios.js";
 
 export default {
-  name: "ServicePage",
+  name: "RentalPage",
   components: {
     Header,
     Footer,
@@ -94,18 +101,18 @@ export default {
     return {
       categories: [],
       isLoading: true,
-      localSearch: "", // Para armazenar o termo pesquisado, se necessário
-      selectedCategory: "", // Categoria selecionada no filtro
+      localSearch: "",
+      selectedCategory: "",
     };
   },
   computed: {
-    // Extrai todos os nomes de categorias, conforme agrupamento carregado
     allCategoryNames() {
       return this.categories.map((cat) => cat.nome);
     },
-    // Filtra as categorias com base na categoria selecionada; se nenhuma estiver selecionada, retorna todas
     filteredCategories() {
-      if (!this.selectedCategory) return this.categories;
+      if (!this.selectedCategory) {
+        return this.categories;
+      }
       return this.categories.filter(
         (cat) => cat.nome === this.selectedCategory
       );
@@ -121,24 +128,29 @@ export default {
       } else {
         searchQuery = "";
       }
-      if (!searchQuery.trim()) return;
+      this.localSearch = searchQuery;
+
+      this.isLoading = true;
       try {
-        this.isLoading = true;
-        const response = await axiosInstance.get(
-          `/servicos/search?q=${encodeURIComponent(searchQuery)}`
-        );
-        const servicos = response.data.map((servico) => ({
-          ...servico,
-          horarioFuncionamento: servico.horarioFuncionamento || "Não informado",
-          mediaAvaliacoes:
-            servico.mediaAvaliacoes != null ? servico.mediaAvaliacoes : 0,
+        let response;
+        if (searchQuery.trim()) {
+          response = await axiosInstance.get(
+            `/alugueis/search?q=${encodeURIComponent(searchQuery)}`
+          );
+        } else {
+          response = await axiosInstance.get("/alugueis");
+        }
+        const alugueis = response.data.map((aluguel) => ({
+          ...aluguel,
+          status: aluguel.status || "inativo",
+          mediaAvaliacoes: aluguel.mediaAvaliacoes || 0,
         }));
-        const categoriesMap = servicos.reduce((acc, servico) => {
-          const category = servico.categoria;
+        const categoriesMap = alugueis.reduce((acc, aluguel) => {
+          const category = aluguel.categoria;
           if (!acc[category]) {
             acc[category] = [];
           }
-          acc[category].push(servico);
+          acc[category].push(aluguel);
           return acc;
         }, {});
         this.categories = Object.keys(categoriesMap).map((key) => ({
@@ -146,7 +158,7 @@ export default {
           items: categoriesMap[key],
         }));
       } catch (error) {
-        console.error("Erro ao buscar serviços:", error.response || error);
+        console.error("Erro ao buscar aluguéis:", error.response || error);
       } finally {
         this.isLoading = false;
       }
@@ -158,9 +170,9 @@ export default {
       });
     },
     viewItemDetail(itemId, type) {
-      if (type === "service") {
+      if (type === "rental") {
         this.$router.push({
-          name: "DetalhesServicos",
+          name: "DetalhesAluguel",
           params: { id: itemId },
         });
       } else {
@@ -173,19 +185,18 @@ export default {
   },
   async created() {
     try {
-      const response = await axiosInstance.get("/servicos");
-      const servicos = response.data.map((servico) => ({
-        ...servico,
-        horarioFuncionamento: servico.horarioFuncionamento || "Não informado",
-        mediaAvaliacoes:
-          servico.mediaAvaliacoes != null ? servico.mediaAvaliacoes : 0,
+      const response = await axiosInstance.get("/alugueis");
+      const alugueis = response.data.map((aluguel) => ({
+        ...aluguel,
+        status: aluguel.status || "inativo",
+        mediaAvaliacoes: aluguel.mediaAvaliacoes || 0,
       }));
-      const categoriesMap = servicos.reduce((acc, servico) => {
-        const category = servico.categoria;
+      const categoriesMap = alugueis.reduce((acc, aluguel) => {
+        const category = aluguel.categoria;
         if (!acc[category]) {
           acc[category] = [];
         }
-        acc[category].push(servico);
+        acc[category].push(aluguel);
         return acc;
       }, {});
       this.categories = Object.keys(categoriesMap).map((key) => ({
@@ -193,7 +204,7 @@ export default {
         items: categoriesMap[key],
       }));
     } catch (error) {
-      console.error("Erro ao buscar serviços:", error.response || error);
+      console.error("Erro ao buscar aluguéis:", error.response || error);
     } finally {
       this.isLoading = false;
     }
@@ -301,7 +312,7 @@ export default {
 }
 
 .star-display span.filled {
-  color: gold;
+  color: gold !important;
 }
 
 .no-results {
